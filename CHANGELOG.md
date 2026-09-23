@@ -13,3 +13,6 @@ All notable changes to this project will be documented in this file.
 - Serialize quiz data with standard JSON and escaped HTML attributes, and
   render HTML-like titles, identifiers, choice labels, and spoiler text as
   plain text.
+- Replace Watch.JS state propagation with synchronous explicit transitions,
+  keep wrong true/false answers retryable and revealable, and contain browser
+  initialization failures to the affected quiz or question.

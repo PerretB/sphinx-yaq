@@ -5,19 +5,20 @@ Last updated: 2026-09-23
 ## Overall state
 
 The target repository `D:\sphinx-yaq` is initialized on `main` and tracks
-`origin/main`. Batches 00 through 03 are complete: the characterized legacy
+`origin/main`. Batches 00 through 04 are complete: the characterized legacy
 implementation is now available as an installable package with namespaced
 assets, reproducible distribution metadata, build-time model validation, safe
 serialization, directly tested JavaScript grading/state modules, and a
-reproducible browser bundle.
+reproducible browser bundle. Batch 04 replaced watcher-driven state with
+explicit synchronous transitions and fixed the scheduled P0 runtime defects.
 
 ## Current batch
 
-**Batch 04 — Explicit runtime state and P0 behavior fixes**
+**Batch 05 — Local-only persistence**
 
 Status: ready to start.
 
-Batch specification: [`migration_batches/04-runtime-state.md`](migration_batches/04-runtime-state.md)
+Batch specification: [`migration_batches/05-local-storage.md`](migration_batches/05-local-storage.md)
 
 ## Completed work
 
@@ -89,6 +90,32 @@ Batch specification: [`migration_batches/04-runtime-state.md`](migration_batches
   Batch 03 suite reports 100% statements, branches, functions, and lines.
 - Included frontend sources, direct tests, and the build script in the source
   distribution while retaining only generated runtime assets in the wheel.
+- Added pure operations for answer changes, grading, reveal, and reset, and
+  made quiz aggregate state recompute synchronously from question state.
+- Removed all Watch.JS subscriptions, its polling runtime, its Sphinx asset
+  registration, and the vendored package asset.
+- Corrected true/false behavior so wrong answers remain editable, can be
+  retried, and can reveal the correct selection in the actual disabled switch.
+- Added defensive runtime duplicate-ID rejection, per-question failure
+  containment, visible per-quiz fallback messages, and preservation of the
+  original quiz prose when activation fails.
+- Expanded the JavaScript suite to 57 tests, including direct transition tests
+  and jsdom coverage for TF retry/reveal, duplicate IDs, isolated failures, and
+  accidental global bindings.
+
+## Batch 04 intentional compatibility changes and decisions
+
+- Wrong true/false answers are no longer terminal. They now follow the same
+  retry/reveal contract as fill-in and single-choice questions.
+- A revealed true/false answer updates the switch's selected value and disables
+  the completed control; revealed and user-correct states remain distinct.
+- Duplicate quiz identifiers in manually invalid runtime HTML reject the later
+  quiz locally. Valid Sphinx output already rejects document-local duplicates
+  at build time.
+- Quiz and question initialization errors are visible and contained. The
+  original authored prose remains readable when whole-quiz activation fails.
+- Browser-level validation remains deferred because no e2e harness is yet
+  available; the behavior is covered by jsdom integration tests.
 
 ## Batch 03 compatibility and build decisions
 
@@ -196,6 +223,27 @@ setuptools 84.0.0. The wheel smoke test verified that the generated bundle is
 present and copied from the installed wheel. No test warnings or skips were
 reported.
 
+## Target Batch 04 validation
+
+```text
+npm run build:js
+  generated src/sphinx_yaq/_static/sphinx_yaq/yaq.js
+
+npm run test:js
+  stale-bundle check passed
+  3 test files passed
+  57 tests passed (26 integration, 31 direct module tests)
+  extracted-module coverage: 100% statements, branches, functions, and lines
+
+python -m pytest
+  26 tests passed
+```
+
+The Python suite used Python 3.12.14 from the bundled Codex runtime because
+`python` was not exposed on the sandbox `PATH`. No warnings or skips were
+reported. The batch did not add an e2e harness, so browser validation remains
+deferred as specified by the batch contract.
+
 ## Legacy validation baseline
 
 ```text
@@ -301,7 +349,6 @@ Resolve before or during the named batch:
 
 ## Known current behavior captured by tests
 
-- A wrong true/false answer is terminal and cannot reveal the solution.
 - Duplicate quiz identifiers are rejected within each document.
 - Invalid question JSON is rejected by Sphinx with a source-aware diagnostic.
 - Local persistence is a no-op.
@@ -320,8 +367,8 @@ These are characterization statements, not desired final behavior.
 
 None.
 
-Recommended next action: execute Batch 04 in `D:\sphinx-yaq` to make runtime
-state transitions explicit and deliberately fix the scheduled P0 behaviors.
+Recommended next action: execute Batch 05 in `D:\sphinx-yaq` to add optional,
+versioned, namespaced localStorage persistence without coupling it to rendering.
 
 ## Batch checklist
 
@@ -329,7 +376,7 @@ state transitions explicit and deliberately fix the scheduled P0 behaviors.
 - [x] Batch 01 — Package skeleton and reproducible build
 - [x] Batch 02 — Python parsing, validation, and safe output
 - [x] Batch 03 — JavaScript module extraction without behavior changes
-- [ ] Batch 04 — Explicit runtime state and P0 behavior fixes
+- [x] Batch 04 — Explicit runtime state and P0 behavior fixes
 - [ ] Batch 05 — localStorage-only persistence
 - [ ] Batch 06 — Legacy dependency removal and DOM security
 - [ ] Batch 07 — Accessibility and interaction

@@ -2,7 +2,11 @@ import { MathVariableError, testAnswer } from "./grading.js";
 import {
     ActivityState as ActivityStateEnum,
     QuestionState as QuestionStateEnum,
+    answerChanged,
     calculateActivityState,
+    gradeAnswer,
+    resetAnswer,
+    revealAnswer,
 } from "./model.js";
 
 var yaq_app= (function(){
@@ -13,6 +17,7 @@ var yaq_app= (function(){
 	};
 	
 	var quizz = [];
+	var quizIdentifiers = new Set();
 	
 	/*String constants*/
 	var texts = {
@@ -488,8 +493,9 @@ var yaq_app= (function(){
 			};
 		}
 		
-		function Switch3(_model){
+		function Switch3(_model, onChange){
 			this.model = getDefaultModelSwitch3();
+			this.__onChange = onChange || function() {};
 			this.rootDomElement = undefined;
 			this.__buttons = undefined;
 			this.__values = [texts["True"], texts["dontKnow"], texts["False"]];
@@ -498,7 +504,7 @@ var yaq_app= (function(){
 				var extraStyles = this.model.selectedExtraStyles.join(" ")
 				var buttons = this.__buttons;
 				buttons.removeClass(extraStyles + " yaq-switch3-button-active yaq-switch3-button-notActive");
-				model = this.model;
+				var model = this.model;
 				buttons.each(function(index, elem){
 					if(index === model.selectedIndex)
 					{
@@ -511,10 +517,11 @@ var yaq_app= (function(){
 			
 			
 			this.__updateEnabled = function(){
+				arrayClear(this.model.selectedExtraStyles);
+				this.__buttons.removeClass("yaq-switch3-button-disabled");
 				if(this.model.enabled)
 				{
 					this.__buttons.addClass("yaq-interractiveElement");
-					arrayClear(this.model.selectedExtraStyles);
 				} else {
 					this.model.selectedExtraStyles.push("yaq-switch3-button-disabled");
 					this.__buttons.removeClass("yaq-interractiveElement");
@@ -525,6 +532,22 @@ var yaq_app= (function(){
 				this.model.enabled=true;
 				arrayClear(this.model.selectedExtraStyles);
 				this.model.selectedIndex = 1;
+				this.render();
+			};
+
+			this.setEnabled = function(enabled){
+				this.model.enabled = enabled;
+				this.render();
+			};
+
+			this.setSelectedIndex = function(index){
+				this.model.selectedIndex = index;
+				this.render();
+			};
+
+			this.render = function(){
+				this.__updateEnabled();
+				this.__updateSelection();
 			};
 		
 			this.__initEvents = function(){
@@ -533,8 +556,11 @@ var yaq_app= (function(){
 					if(this.model.enabled)
 					{
 						var newIndex = + $(e.target).attr("data-index");
-						if(newIndex !== this.model.selectedIndex)
+						if(newIndex !== this.model.selectedIndex) {
 							this.model.selectedIndex = newIndex;
+							this.render();
+							this.__onChange();
+						}
 					}
 				}).bind(this));
 			}
@@ -572,13 +598,6 @@ var yaq_app= (function(){
 			this.getModel = function(){return this.model;};
 			this.getRootElement = function(){return this.rootDomElement;};
 			
-			watch(this.model, ["selectedIndex"], this.__updateSelection.bind(this));
-			watch(this.model, ["selectedExtraStyles"], (function(prop, action, newvalue, oldvalue){
-					this.__updateExtraStyles(oldvalue);
-				}).bind(this));     
-			watch(this.model, ["enabled"], this.__updateEnabled.bind(this));
-			
-
 		}
 		
 
@@ -610,7 +629,7 @@ var yaq_app= (function(){
 			};
 		}
 		
-		function FBQuestion(params){
+		function FBQuestion(params, onChange){
 		
 			
 			this.model = getDefaultModel();
@@ -624,6 +643,7 @@ var yaq_app= (function(){
 			this.__input = undefined;
 			this.__math_tries = 50;
 			this.__warningMarker = undefined;
+			this.__onChange = onChange || function() {};
 			
 			this.__updateEnabled = function(){
 				this.__input.prop('disabled', !this.model.enabled);
@@ -639,6 +659,11 @@ var yaq_app= (function(){
 					this.__input.val(this.model.value);
 				 }
 					
+			};
+
+			this.render = function(){
+				this.__updateEnabled();
+				this.__updateValue();
 			};
 			
 			this.__initDomElement = function(){
@@ -664,9 +689,11 @@ var yaq_app= (function(){
 				});
 				
 				input.on('input', (function() {
-					this.model.state = QuestionStateEnum.unsolved;
 					this.model.value = this.__input.val();
+					this.model = answerChanged(this.model);
 					this.__warningMarker.addClass('yaq-hidden');
+					this.render();
+					this.__onChange();
 				}).bind(this));
 				
 				root.append(input);
@@ -679,19 +706,18 @@ var yaq_app= (function(){
 			};
 			
 			this.reset = function(){
-				this.model.value = "";
-				this.model.state=QuestionStateEnum.unsolved;
-				this.model.enabled=true;
+				this.model = resetAnswer({ ...this.model, value: "" });
 				this.__warningMarker.addClass('yaq-hidden');
-				
+				this.render();
+				this.__onChange();
 			};
 			
 			this.getModel = function(){return this.model;};
 			
 			this.getRootElement = function(){ return this.rootDomElement; };
-			
+
 			this.grade = function(){
-				q=this.__input;
+				var q=this.__input;
 				
 				var gans = this.model.value;
 				if(gans)
@@ -721,10 +747,9 @@ var yaq_app= (function(){
 							},
 						}))
 						{
-							this.model.enabled=false;
-							this.model.state = QuestionStateEnum.correct;
+							this.model = gradeAnswer(this.model, { answered: true, correct: true });
 						}else{
-							this.model.state = QuestionStateEnum.wrong;
+							this.model = gradeAnswer(this.model, { answered: true, correct: false });
 						}
 					} catch (e){
 						if (e instanceof MathVariableError) {
@@ -738,23 +763,22 @@ var yaq_app= (function(){
 						blink(q);
 					}
 				}else{
+					this.model = gradeAnswer(this.model, { answered: false, correct: false });
 					blink(q);
 				}
+				this.render();
+				this.__onChange();
 
 			};
 			
 			this.solve = function(){
-				this.model.value = this.__displayedAnswer;
-				this.model.enabled = false;
-				this.model.state = QuestionStateEnum.solved;
+				this.model = revealAnswer({ ...this.model, value: this.__displayedAnswer });
+				this.render();
+				this.__onChange();
 			};
 			
 			this.__initDomElement();
 
-			watch(this.model, "state", this.__updateState.bind(this));
-			watch(this.model, "enabled", this.__updateEnabled.bind(this));
-			watch(this.model, "value", this.__updateValue.bind(this));
-			
 		}
 		
 		FBQuestion.getDefaultModel = getDefaultModel;
@@ -788,7 +812,7 @@ var yaq_app= (function(){
 			};
 		}
 		
-		function ListQuestion(params){
+		function ListQuestion(params, onChange){
 		
 
 			this.model = getDefaultModel();
@@ -798,6 +822,7 @@ var yaq_app= (function(){
 			
 			this.rootDomElement = undefined;
 			this.__input = undefined;
+			this.__onChange = onChange || function() {};
 			
 			this.__updateEnabled = function(){
 				this.__input.prop('disabled', !this.model.enabled);
@@ -815,6 +840,11 @@ var yaq_app= (function(){
 				
 			}
 			;
+
+			this.render = function(){
+				this.__updateEnabled();
+				this.__updateSelectedElement();
+			};
 			this.__initDomElement = function(){
 				var root = $('<span class="yaq-FBQuestion"></span>');
 				this.rootDomElement = root;
@@ -830,8 +860,10 @@ var yaq_app= (function(){
 
 				
 				input.on('change', (function() {
-					this.model.state = QuestionStateEnum.unsolved;
 					this.model.selectedValue = this.__input.find(":selected").text();
+					this.model = answerChanged(this.model);
+					this.render();
+					this.__onChange();
 				}).bind(this));
 				
 				root.append(input);
@@ -842,9 +874,9 @@ var yaq_app= (function(){
 			
 			this.reset = function(){
 				
-				this.model.state=QuestionStateEnum.unsolved;
-				this.model.enabled=true;
-				this.model.selectedValue="";
+				this.model = resetAnswer({ ...this.model, selectedValue: "" });
+				this.render();
+				this.__onChange();
 			};
 			
 			this.getModel = function(){return this.model;};
@@ -855,29 +887,26 @@ var yaq_app= (function(){
 				var gans = this.model.selectedValue;
 			
 				if(gans.trim() === ""){
-					this.model.state = QuestionStateEnum.unsolved;
+					this.model = gradeAnswer(this.model, { answered: false, correct: false });
 					blink(this.__input);// this.__input.effect("highlight", {}, 500)
 				} else if(gans === this.__answer){
-					this.model.state = QuestionStateEnum.correct | QuestionStateEnum.solved;
-					this.model.enabled = false;
+					this.model = gradeAnswer(this.model, { answered: true, correct: true });
 				} else {
-					this.model.state = QuestionStateEnum.wrong;
+					this.model = gradeAnswer(this.model, { answered: true, correct: false });
 				}
+				this.render();
+				this.__onChange();
 			
 			};
 			
 			this.solve = function(){
-				this.model.selectedValue = this.__answer;
-				this.model.enabled = false;
-				this.model.state = QuestionStateEnum.solved;
+				this.model = revealAnswer({ ...this.model, selectedValue: this.__answer });
+				this.render();
+				this.__onChange();
 			};
 			
 			this.__initDomElement();
 
-			watch(this.model, "state", this.__updateState.bind(this));
-			watch(this.model, "enabled", this.__updateEnabled.bind(this));
-			watch(this.model, "selectedValue", this.__updateSelectedElement.bind(this));
-			
 		}
 		
 		ListQuestion.getDefaultModel = getDefaultModel;
@@ -912,15 +941,20 @@ var yaq_app= (function(){
 			};
 		}
 		
-		function TFQuestion(params){
+		function TFQuestion(params, onChange){
 			this.model = getDefaultModel();
 			this.__explanation = getDefault(params["explanation"], "");
 			this.__answer = getDefault(params["answer"], "");
 			this.rootDomElement = undefined;
 			this.__switch3 = undefined;
+			this.__onChange = onChange || function() {};
 			
 			this.__updateEnabled = function(){
-				this.__switch3.getModel().enabled = this.model.enabled;
+				this.__switch3.setEnabled(this.model.enabled);
+			};
+
+			this.render = function(){
+				this.__updateEnabled();
 			};
 			
 			this.__updateState = function(){
@@ -930,7 +964,10 @@ var yaq_app= (function(){
 			this.__initDomElement = function(){
 				var root = $('<span class="yaq-TFQuestion"></span>');
 				this.rootDomElement = root;
-				this.__switch3 = new Switch3();
+				this.__switch3 = new Switch3(undefined, (function(){
+					this.model = answerChanged(this.model);
+					this.__onChange();
+				}).bind(this));
 				this.model.innerModel = this.__switch3.model;
 				root.append(this.__switch3.getRootElement());
 							
@@ -940,8 +977,9 @@ var yaq_app= (function(){
 			
 			this.reset = function(){
 				this.__switch3.reset();
-				this.model.enabled=true;
-				this.model.state = QuestionStateEnum.unsolved;
+				this.model = resetAnswer(this.model);
+				this.render();
+				this.__onChange();
 			};
 			
 			this.getModel = function(){return this.model;};
@@ -953,33 +991,29 @@ var yaq_app= (function(){
 				var gans = this.__switch3.getModel().selectedIndex
 				var cans = (this.__answer === "T") ? TrueIndexSwitch3 : FalseIndexSwitch3;
 				if(gans === 1){
-					this.model.state = QuestionStateEnum.unsolved;
+					this.model = gradeAnswer(this.model, { answered: false, correct: false });
 					blink(this.__switch3.rootDomElement);
 					//this.__switch3.getRootElement().effect("highlight", {}, 500);
 				} else if(gans === cans){
-					this.model.state = QuestionStateEnum.correct | QuestionStateEnum.solved;
-					this.model.enabled = false;
+					this.model = gradeAnswer(this.model, { answered: true, correct: true });
 				} else {
-					this.model.state = QuestionStateEnum.wrong | QuestionStateEnum.solved;
-					this.model.enabled = false;
+					this.model = gradeAnswer(this.model, { answered: true, correct: false });
 				}
+				this.render();
+				this.__onChange();
 
 			};
 			
 			this.solve = function(){
 				var cans = (this.__answer === "T") ? TrueIndexSwitch3 : FalseIndexSwitch3;
-				this.model.selectedIndex = cans;
-				this.model.state =  QuestionStateEnum.solved;
+				this.__switch3.setSelectedIndex(cans);
+				this.model = revealAnswer(this.model);
+				this.render();
+				this.__onChange();
 			};
 			
 			this.__initDomElement();
 
-			watch(this.model, "state", this.__updateState.bind(this));
-			watch(this.model, "enabled", this.__updateEnabled.bind(this));
-			/*watch(this.__switch3.getModel(), ["selectedIndex"], (function(prop, action, newvalue, oldvalue){
-				this.model.state = QuestionStateEnum.unsolved;
-			}).bind(this));*/
-			
 		}
 		
 		TFQuestion.getDefaultModel = getDefaultModel;
@@ -1014,7 +1048,7 @@ var yaq_app= (function(){
 			};
 		}
 		
-		function QuestionContainer(innerQuestionParams,rootElement){
+		function QuestionContainer(innerQuestionParams,rootElement,onChange){
 		
 			this.model = getDefaultModel();
 			this.rootDomElement = rootElement;
@@ -1024,9 +1058,11 @@ var yaq_app= (function(){
 			this.__wrongMarker = undefined;
 			this.__correctMarker = undefined;
 			this.__infoMarker = undefined;
+			this.__onChange = onChange || function() {};
 			
 			this.__updateEnabled = function(){
 				this.__innerQuestion.getModel().enabled = this.model.enabled;
+				this.__innerQuestion.render();
 			};
 			
 			this.__updateState = function(){
@@ -1049,6 +1085,12 @@ var yaq_app= (function(){
 					this.__infoMarker.removeClass('yaq-hidden');
 				}
 			};
+
+			this.__innerChanged = function(){
+				this.model.innerModel = this.__innerQuestion.getModel();
+				this.__updateState();
+				this.__onChange();
+			};
 			
 			this.__initDomElement = function(innerQuestionParams){
 				var root ;
@@ -1065,10 +1107,12 @@ var yaq_app= (function(){
 				
 					
 
-				this.__innerQuestion = new questionConstructors[innerQuestionParams.type](innerQuestionParams);
+				var QuestionConstructor = questionConstructors[innerQuestionParams.type];
+				if(!QuestionConstructor)
+					throw new Error("Unsupported YAQ question type: " + innerQuestionParams.type);
+				this.__innerQuestion = new QuestionConstructor(innerQuestionParams, this.__innerChanged.bind(this));
 				this.model.innerModel = this.__innerQuestion.getModel();
 				root.append(this.__innerQuestion.getRootElement());
-				watch(this.__innerQuestion.getModel(), "state", this.__updateState.bind(this));
 					
 				this.__wrongMarker = $("<i class='fa fa-thumbs-down yaq-hidden' style='color:red; margin-right:10px;margin-left:10px;' data-role='wrongMarker'></i>");
 				this.__correctMarker = $("<i class='fa fa-thumbs-up yaq-hidden' style='color:green; margin-right:10px;margin-left:10px;' data-role='correctMarker'></i>");
@@ -1084,11 +1128,17 @@ var yaq_app= (function(){
 			this.reset = function(){
 				this.__innerQuestion.reset();
 				this.model.enabled=true;
+				this.__updateState();
 			};
 			
 			this.getModel = function(){return this.model;};
 			
 			this.getRootElement = function(){ return this.rootDomElement; };
+
+			this.setEnabled = function(enabled){
+				this.model.enabled = enabled;
+				this.__updateEnabled();
+			};
 			
 			this.grade = function(){
 				this.__innerQuestion.grade();
@@ -1100,9 +1150,6 @@ var yaq_app= (function(){
 		
 			this.__initDomElement(innerQuestionParams);
 
-			watch(this.model, "enabled", this.__updateEnabled.bind(this));
-		
-			
 		}
 		
 		QuestionContainer.getDefaultModel = getDefaultModel;
@@ -1139,16 +1186,17 @@ var yaq_app= (function(){
 				};
 			}
 
-		function QuizActivity(innerHTML){
+		function QuizActivity(innerHTML, onChange){
 			this.model = getDefaultModel();
 			this.rootDomElement = undefined;
 			this.__questions = [];
+			this.__onChange = onChange || function() {};
 				
 			
 			this.__updateEnabled = function()
 			{
 				this.__questions.forEach((function(elem){
-					elem.getModel().enabled = this.model.enabled;
+					elem.setEnabled(this.model.enabled);
 				}).bind(this));
 			};
 			
@@ -1157,6 +1205,12 @@ var yaq_app= (function(){
 					return elem.getModel().state;
 				}));
 			};
+
+			this.__questionChanged = function(){
+				this.__updateState();
+				this.__onChange();
+			};
+
 					
 			
 			this.grade = function(){
@@ -1192,16 +1246,20 @@ var yaq_app= (function(){
 				root.html(innerHTML);
 				root.find('.yaq-q').each((function(index,elem){
 					elem = $(elem);
-					var textmodel = __b64DecodeUnicode(elem.attr('data-model'));
-					var model = JSON.parse(textmodel);
-					var question = new QuestionContainer(model, elem);
-					this.__questions.push(question);
-					this.model['innerModel' + index] = question.getModel();
-					//elem.replaceWith(question.getRootElement());
-					watch(question.getModel(),["state"], (this.__updateState).bind(this));
+					try {
+						var textmodel = __b64DecodeUnicode(elem.attr('data-model'));
+						var model = JSON.parse(textmodel);
+						var question = new QuestionContainer(model, elem, this.__questionChanged.bind(this));
+						this.__questions.push(question);
+						this.model['innerModel' + index] = question.getModel();
+					} catch (error) {
+						console.error("YAQ: Error while initializing question.", error);
+						elem.removeClass("yaq-q yaq-Question").addClass("yaq-question-fallback");
+						elem.append($("<span></span>").text(" Interactive question unavailable."));
+					}
 				}).bind(this));
 				
-				
+				this.__updateState();
 				this.__updateEnabled();
 			};
 			
@@ -1210,10 +1268,12 @@ var yaq_app= (function(){
 			this.__initDomElement(innerHTML);
 			
 
-			watch(this.model, "enabled", this.__updateEnabled.bind(this));
-			
 			this.getModel = function(){return this.model;};
 			this.getRootElement = function(){return this.rootDomElement;};
+			this.setEnabled = function(enabled){
+				this.model.enabled = enabled;
+				this.__updateEnabled();
+			};
 			
 		}
 		
@@ -1257,7 +1317,7 @@ var yaq_app= (function(){
 			this.__uid = params['uid'];
 			if(!this.__uid)
 				throw "Missing or invalid uid field in YAQ quiz model " + this.__uid;
-			if(quizz[this.__uid])
+			if(quizIdentifiers.has(this.__uid))
 				throw "YAQ quiz uid is already used " + this.__uid;
 			//quizz[this.__uid] = this;
 			this.rootDomElement = undefined;
@@ -1279,7 +1339,7 @@ var yaq_app= (function(){
 					this.__buttonSolve.removeClass("yaq-interractiveElement");
 				}
 				
-				this.__activity.getModel().enabled = this.model.enabled;
+				this.__activity.setEnabled(this.model.enabled);
 			};
 					
 			this.__updateState = function()
@@ -1307,6 +1367,13 @@ var yaq_app= (function(){
 					this.__buttonSolve.hide();
 				}	
 			};
+
+			this.__activityChanged = function(){
+				this.model.innerModel = this.__activity.getModel();
+				this.model.state = this.__activity.getModel().state;
+				this.__updateState();
+				this.__updateModel();
+			};
 			
 			this.grade = function(){
 				this.__activity.grade();
@@ -1319,6 +1386,7 @@ var yaq_app= (function(){
 			this.reset = function(){
 				this.__activity.reset();
 				this.model.enabled=true;
+				this.__updateEnabled();
 			};
 			
 			this.__initEvent = function(){
@@ -1354,12 +1422,10 @@ var yaq_app= (function(){
 				var mainContent = $("<div class='yaq-main-content'></div>");
 				root.append(mainContent);
 				
-				this.__activity = new QuizActivity(innerHTML);
+				this.__activity = new QuizActivity(innerHTML, this.__activityChanged.bind(this));
 				this.model.innerModel = this.__activity.getModel();
 				mainContent.append(this.__activity.getRootElement());
-				watch(this.__activity.getModel(), ["state"], (function(){
-					this.model.state = this.__activity.getModel().state;
-				}).bind(this));
+				this.model.state = this.__activity.getModel().state;
 				
 				
 				var footer=$('<div class="yaq-footer"></div>');
@@ -1384,13 +1450,6 @@ var yaq_app= (function(){
 			};
 			
 			this.__initDomElement(innerHTML);
-			
-			watch(this.model, "state", this.__updateState.bind(this));
-			watch(this.model, "enabled", this.__updateEnabled.bind(this));
-			
-			watch(this.model,this.__updateModel.bind(this));
-
-			
 			
 			this.getModel = (function(){return this.model;}).bind(this);
 			this.getRootElement = (function(){return this.rootDomElement;}).bind(this);
@@ -1516,9 +1575,10 @@ var yaq_app= (function(){
 		model.exerciceNumber = index;
 		var quiz = new Quiz(innerHTML, model);
 		quizz.push(quiz);
+		quizIdentifiers.add(quiz.__uid);
 		//self.persistenceWidget.load(quiz.__uid,(quiz.setModel).bind(quiz));
 		//setTimeout((function(jqElement,quiz){ // deferred display after model loading (perhaps)
-			jqElement.append(quiz.getRootElement());
+			jqElement.empty().append(quiz.getRootElement());
 		//	}).bind(this,jqElement,quiz));	
 		
 	}
@@ -1552,25 +1612,22 @@ var yaq_app= (function(){
 		initialized=true;	
 		self.persistenceWidget = new PersistenceWidget();
         $(".yaq").each(function(index){
-			e = $(this);
-			innerHTML = e.html();
-			var model = e.attr('data-model');
+			var element = $(this);
+			var innerHTML = element.html();
+			var model = element.attr('data-model');
 			try {
 				if(model)
 				{
 					model = JSON.parse(model);
-					e.empty();
-					initFromObj(e, index, innerHTML, model);
+					initFromObj(element, index, innerHTML, model);
 				}
-				else throw "Empty model in YAQ quiz";
+				else throw new Error("Empty model in YAQ quiz");
 				
 			}
-			catch (e) {
-			   console.log(e);
-			   console.log("YAQ: Error while parsing quiz.");
-			   console.log("Inner content is: " + innerHTML);
-			   if(model)
-				   console.log('Top model: ' + model);
+			catch (error) {
+			   console.error("YAQ: Error while initializing quiz.", error);
+			   element.addClass("yaq-quiz-fallback");
+			   element.append($("<p></p>").text("Interactive quiz unavailable."));
 			}
 			
 		}).show();

@@ -20,7 +20,7 @@ def test_html_build_emits_quiz_models_and_assets(app, warning):
 
     assert 'class="yaq"' in html
     assert 'class="yaq-q"' in html
-    assert "sphinx_yaq/lib/watch.js" in html
+    assert "sphinx_yaq/lib/watch.js" not in html
     assert "sphinx_yaq/lib/js.cookie.js" in html
     assert "sphinx_yaq/lib/fbconfig.js" in html
     assert "sphinx_yaq/math.js" in html
@@ -45,7 +45,7 @@ def test_html_build_copies_extension_static_files(app):
     assert (static / "yaq.js").is_file()
     assert (static / "math.js").is_file()
     assert (static / "css" / "yaq.css").is_file()
-    assert (static / "lib" / "watch.js").is_file()
+    assert not (static / "lib" / "watch.js").exists()
 
 
 @pytest.mark.sphinx("html", testroot="basic")

@@ -9,7 +9,6 @@ const STATIC = resolve(HERE, "../../src/sphinx_yaq/_static/sphinx_yaq");
 
 const RUNTIME_FILES = [
   resolve(STATIC, "lib/jquery-3.2.1.min.js"),
-  resolve(STATIC, "lib/watch.js"),
   resolve(STATIC, "lib/js.cookie.js"),
   resolve(STATIC, "math.js"),
   resolve(STATIC, "yaq.js"),

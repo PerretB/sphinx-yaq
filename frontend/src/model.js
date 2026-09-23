@@ -11,6 +11,28 @@ export const ActivityState = Object.freeze({
   ended: 4,
 });
 
+export function answerChanged(model) {
+  return { ...model, state: QuestionState.unsolved };
+}
+
+export function gradeAnswer(model, { answered, correct }) {
+  if (!answered) {
+    return { ...model, state: QuestionState.unsolved };
+  }
+  if (correct) {
+    return { ...model, enabled: false, state: QuestionState.correct };
+  }
+  return { ...model, enabled: true, state: QuestionState.wrong };
+}
+
+export function revealAnswer(model) {
+  return { ...model, enabled: false, state: QuestionState.solved };
+}
+
+export function resetAnswer(model) {
+  return { ...model, enabled: true, state: QuestionState.unsolved };
+}
+
 export function calculateActivityState(questionStates) {
   let allCorrect = true;
   let anyUnsolved = false;

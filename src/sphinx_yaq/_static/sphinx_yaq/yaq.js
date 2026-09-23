@@ -122,6 +122,24 @@
     solvable: 2,
     ended: 4
   });
+  function answerChanged(model) {
+    return { ...model, state: QuestionState.unsolved };
+  }
+  function gradeAnswer(model, { answered, correct }) {
+    if (!answered) {
+      return { ...model, state: QuestionState.unsolved };
+    }
+    if (correct) {
+      return { ...model, enabled: false, state: QuestionState.correct };
+    }
+    return { ...model, enabled: true, state: QuestionState.wrong };
+  }
+  function revealAnswer(model) {
+    return { ...model, enabled: false, state: QuestionState.solved };
+  }
+  function resetAnswer(model) {
+    return { ...model, enabled: true, state: QuestionState.unsolved };
+  }
   function calculateActivityState(questionStates) {
     let allCorrect = true;
     let anyUnsolved = false;
@@ -151,6 +169,7 @@
       "base64Encode": false
     };
     var quizz = [];
+    var quizIdentifiers = /* @__PURE__ */ new Set();
     var texts = {
       "True": "V",
       "False": "F",
@@ -186,10 +205,10 @@
           try {
             if (sucessCallback)
               sucessCallback();
-          } catch (e2) {
-            console.log(e2);
+          } catch (e) {
+            console.log(e);
             if (errorCallback)
-              errorCallback(e2);
+              errorCallback(e);
           }
         };
         this.getLatestTimestamp = function(key, sucessCallback, errorCallback) {
@@ -205,9 +224,9 @@
             try {
               value = JSON.parse(value);
               sucessCallback(value);
-            } catch (e2) {
+            } catch (e) {
               if (errorCallback)
-                errorCallback(e2);
+                errorCallback(e);
             }
           } else {
             if (errorCallback)
@@ -223,7 +242,7 @@
         function updateUserData() {
           try {
             database.ref("users/" + userId + "/profile/").set({ name, email });
-          } catch (e2) {
+          } catch (e) {
             console.log("failed saving user data");
           }
         }
@@ -240,11 +259,11 @@
             database.ref().update(updates);
             if (sucessCallback)
               sucessCallback();
-          } catch (e2) {
-            console.log(e2);
+          } catch (e) {
+            console.log(e);
             console.log("failed saving user data");
             if (errorCallback)
-              errorCallback(e2);
+              errorCallback(e);
           }
         };
         this.getLatestTimestamp = function(key, sucessCallback, errorCallback) {
@@ -482,8 +501,10 @@
           "selectedExtraStyles": []
         };
       }
-      function Switch32(_model) {
+      function Switch32(_model, onChange) {
         this.model = getDefaultModelSwitch3();
+        this.__onChange = onChange || function() {
+        };
         this.rootDomElement = void 0;
         this.__buttons = void 0;
         this.__values = [texts["True"], texts["dontKnow"], texts["False"]];
@@ -491,7 +512,7 @@
           var extraStyles = this.model.selectedExtraStyles.join(" ");
           var buttons = this.__buttons;
           buttons.removeClass(extraStyles + " yaq-switch3-button-active yaq-switch3-button-notActive");
-          model = this.model;
+          var model = this.model;
           buttons.each(function(index, elem) {
             if (index === model.selectedIndex) {
               $(elem).addClass("yaq-switch3-button-active " + extraStyles);
@@ -501,9 +522,10 @@
           });
         };
         this.__updateEnabled = function() {
+          arrayClear(this.model.selectedExtraStyles);
+          this.__buttons.removeClass("yaq-switch3-button-disabled");
           if (this.model.enabled) {
             this.__buttons.addClass("yaq-interractiveElement");
-            arrayClear(this.model.selectedExtraStyles);
           } else {
             this.model.selectedExtraStyles.push("yaq-switch3-button-disabled");
             this.__buttons.removeClass("yaq-interractiveElement");
@@ -513,13 +535,29 @@
           this.model.enabled = true;
           arrayClear(this.model.selectedExtraStyles);
           this.model.selectedIndex = 1;
+          this.render();
+        };
+        this.setEnabled = function(enabled) {
+          this.model.enabled = enabled;
+          this.render();
+        };
+        this.setSelectedIndex = function(index) {
+          this.model.selectedIndex = index;
+          this.render();
+        };
+        this.render = function() {
+          this.__updateEnabled();
+          this.__updateSelection();
         };
         this.__initEvents = function() {
-          this.__buttons.click((function(e2) {
+          this.__buttons.click((function(e) {
             if (this.model.enabled) {
-              var newIndex = +$(e2.target).attr("data-index");
-              if (newIndex !== this.model.selectedIndex)
+              var newIndex = +$(e.target).attr("data-index");
+              if (newIndex !== this.model.selectedIndex) {
                 this.model.selectedIndex = newIndex;
+                this.render();
+                this.__onChange();
+              }
             }
           }).bind(this));
         };
@@ -551,11 +589,6 @@
         this.getRootElement = function() {
           return this.rootDomElement;
         };
-        watch(this.model, ["selectedIndex"], this.__updateSelection.bind(this));
-        watch(this.model, ["selectedExtraStyles"], (function(prop, action, newvalue, oldvalue) {
-          this.__updateExtraStyles(oldvalue);
-        }).bind(this));
-        watch(this.model, ["enabled"], this.__updateEnabled.bind(this));
       }
       Switch32.getDefaultModel = getDefaultModelSwitch3;
       return Switch32;
@@ -571,7 +604,7 @@
           "value": value
         };
       }
-      function FBQuestion2(params) {
+      function FBQuestion2(params, onChange) {
         this.model = getDefaultModel();
         this.__explanation = getDefault(params["explanation"], "");
         this.__flags = getDefault(params["flags"], "");
@@ -583,6 +616,8 @@
         this.__input = void 0;
         this.__math_tries = 50;
         this.__warningMarker = void 0;
+        this.__onChange = onChange || function() {
+        };
         this.__updateEnabled = function() {
           this.__input.prop("disabled", !this.model.enabled);
         };
@@ -593,6 +628,10 @@
           if (this.__input.val() !== this.model.value) {
             this.__input.val(this.model.value);
           }
+        };
+        this.render = function() {
+          this.__updateEnabled();
+          this.__updateValue();
         };
         this.__initDomElement = function() {
           var root = $('<span class="yaq-FBQuestion"></span>');
@@ -610,9 +649,11 @@
               input.attr("data-" + elem.trim(), "");
           });
           input.on("input", (function() {
-            this.model.state = QuestionState.unsolved;
             this.model.value = this.__input.val();
+            this.model = answerChanged(this.model);
             this.__warningMarker.addClass("yaq-hidden");
+            this.render();
+            this.__onChange();
           }).bind(this));
           root.append(input);
           this.__warningMarker = $("<span class='yaq-hidden' style='font-size:150%;cursor:help;color:orange; margin-right:10px;margin-left:10px;' data-role='warningMarker' title='This is my tooltip'>⚠</span>");
@@ -621,10 +662,10 @@
           this.__updateState();
         };
         this.reset = function() {
-          this.model.value = "";
-          this.model.state = QuestionState.unsolved;
-          this.model.enabled = true;
+          this.model = resetAnswer({ ...this.model, value: "" });
           this.__warningMarker.addClass("yaq-hidden");
+          this.render();
+          this.__onChange();
         };
         this.getModel = function() {
           return this.model;
@@ -633,7 +674,7 @@
           return this.rootDomElement;
         };
         this.grade = function() {
-          q = this.__input;
+          var q = this.__input;
           var gans = this.model.value;
           if (gans) {
             var mathEq = q.is("[data-math]");
@@ -660,37 +701,36 @@
                   window.alert("Failed to parse correct answer, contact website creator: " + correctAnswer);
                 }
               })) {
-                this.model.enabled = false;
-                this.model.state = QuestionState.correct;
+                this.model = gradeAnswer(this.model, { answered: true, correct: true });
               } else {
-                this.model.state = QuestionState.wrong;
+                this.model = gradeAnswer(this.model, { answered: true, correct: false });
               }
-            } catch (e2) {
-              if (e2 instanceof MathVariableError) {
+            } catch (e) {
+              if (e instanceof MathVariableError) {
                 this.__warningMarker[0].title = texts["wrongMathVariableError"] + Object.keys(this.__math_vars).map(function(key) {
                   return key;
                 }).join(", ");
-              } else if (e2 instanceof SyntaxError) {
-                this.__warningMarker[0].title = texts["wrongMathSyntaxError"] + " " + e2.message;
+              } else if (e instanceof SyntaxError) {
+                this.__warningMarker[0].title = texts["wrongMathSyntaxError"] + " " + e.message;
               } else {
-                this.__warningMarker[0].title = texts["wrongMathError"] + e2.message;
+                this.__warningMarker[0].title = texts["wrongMathError"] + e.message;
               }
               this.__warningMarker.removeClass("yaq-hidden");
               blink(q);
             }
           } else {
+            this.model = gradeAnswer(this.model, { answered: false, correct: false });
             blink(q);
           }
+          this.render();
+          this.__onChange();
         };
         this.solve = function() {
-          this.model.value = this.__displayedAnswer;
-          this.model.enabled = false;
-          this.model.state = QuestionState.solved;
+          this.model = revealAnswer({ ...this.model, value: this.__displayedAnswer });
+          this.render();
+          this.__onChange();
         };
         this.__initDomElement();
-        watch(this.model, "state", this.__updateState.bind(this));
-        watch(this.model, "enabled", this.__updateEnabled.bind(this));
-        watch(this.model, "value", this.__updateValue.bind(this));
       }
       FBQuestion2.getDefaultModel = getDefaultModel;
       FBQuestion2.QuestionStateEnum = QuestionState;
@@ -708,13 +748,15 @@
           "selectedValue": selectedValue
         };
       }
-      function ListQuestion2(params) {
+      function ListQuestion2(params, onChange) {
         this.model = getDefaultModel();
         this.__explanation = getDefault(params["explanation"], "");
         this.__values = getDefault(params["values"], "");
         this.__answer = getDefault(params["answer"], "");
         this.rootDomElement = void 0;
         this.__input = void 0;
+        this.__onChange = onChange || function() {
+        };
         this.__updateEnabled = function() {
           this.__input.prop("disabled", !this.model.enabled);
         };
@@ -724,6 +766,10 @@
           if (this.model.selectedValue != this.__input.find(":selected").text()) {
             this.__input.val(this.model.selectedValue);
           }
+        };
+        this.render = function() {
+          this.__updateEnabled();
+          this.__updateSelectedElement();
         };
         this.__initDomElement = function() {
           var root = $('<span class="yaq-FBQuestion"></span>');
@@ -738,17 +784,19 @@
             }
           );
           input.on("change", (function() {
-            this.model.state = QuestionState.unsolved;
             this.model.selectedValue = this.__input.find(":selected").text();
+            this.model = answerChanged(this.model);
+            this.render();
+            this.__onChange();
           }).bind(this));
           root.append(input);
           this.__updateEnabled();
           this.__updateState();
         };
         this.reset = function() {
-          this.model.state = QuestionState.unsolved;
-          this.model.enabled = true;
-          this.model.selectedValue = "";
+          this.model = resetAnswer({ ...this.model, selectedValue: "" });
+          this.render();
+          this.__onChange();
         };
         this.getModel = function() {
           return this.model;
@@ -759,24 +807,22 @@
         this.grade = function() {
           var gans = this.model.selectedValue;
           if (gans.trim() === "") {
-            this.model.state = QuestionState.unsolved;
+            this.model = gradeAnswer(this.model, { answered: false, correct: false });
             blink(this.__input);
           } else if (gans === this.__answer) {
-            this.model.state = QuestionState.correct | QuestionState.solved;
-            this.model.enabled = false;
+            this.model = gradeAnswer(this.model, { answered: true, correct: true });
           } else {
-            this.model.state = QuestionState.wrong;
+            this.model = gradeAnswer(this.model, { answered: true, correct: false });
           }
+          this.render();
+          this.__onChange();
         };
         this.solve = function() {
-          this.model.selectedValue = this.__answer;
-          this.model.enabled = false;
-          this.model.state = QuestionState.solved;
+          this.model = revealAnswer({ ...this.model, selectedValue: this.__answer });
+          this.render();
+          this.__onChange();
         };
         this.__initDomElement();
-        watch(this.model, "state", this.__updateState.bind(this));
-        watch(this.model, "enabled", this.__updateEnabled.bind(this));
-        watch(this.model, "selectedValue", this.__updateSelectedElement.bind(this));
       }
       ListQuestion2.getDefaultModel = getDefaultModel;
       ListQuestion2.QuestionStateEnum = QuestionState;
@@ -794,21 +840,29 @@
           "state": state
         };
       }
-      function TFQuestion2(params) {
+      function TFQuestion2(params, onChange) {
         this.model = getDefaultModel();
         this.__explanation = getDefault(params["explanation"], "");
         this.__answer = getDefault(params["answer"], "");
         this.rootDomElement = void 0;
         this.__switch3 = void 0;
+        this.__onChange = onChange || function() {
+        };
         this.__updateEnabled = function() {
-          this.__switch3.getModel().enabled = this.model.enabled;
+          this.__switch3.setEnabled(this.model.enabled);
+        };
+        this.render = function() {
+          this.__updateEnabled();
         };
         this.__updateState = function() {
         };
         this.__initDomElement = function() {
           var root = $('<span class="yaq-TFQuestion"></span>');
           this.rootDomElement = root;
-          this.__switch3 = new Switch3();
+          this.__switch3 = new Switch3(void 0, (function() {
+            this.model = answerChanged(this.model);
+            this.__onChange();
+          }).bind(this));
           this.model.innerModel = this.__switch3.model;
           root.append(this.__switch3.getRootElement());
           this.__updateEnabled();
@@ -816,8 +870,9 @@
         };
         this.reset = function() {
           this.__switch3.reset();
-          this.model.enabled = true;
-          this.model.state = QuestionState.unsolved;
+          this.model = resetAnswer(this.model);
+          this.render();
+          this.__onChange();
         };
         this.getModel = function() {
           return this.model;
@@ -829,24 +884,24 @@
           var gans = this.__switch3.getModel().selectedIndex;
           var cans = this.__answer === "T" ? TrueIndexSwitch3 : FalseIndexSwitch3;
           if (gans === 1) {
-            this.model.state = QuestionState.unsolved;
+            this.model = gradeAnswer(this.model, { answered: false, correct: false });
             blink(this.__switch3.rootDomElement);
           } else if (gans === cans) {
-            this.model.state = QuestionState.correct | QuestionState.solved;
-            this.model.enabled = false;
+            this.model = gradeAnswer(this.model, { answered: true, correct: true });
           } else {
-            this.model.state = QuestionState.wrong | QuestionState.solved;
-            this.model.enabled = false;
+            this.model = gradeAnswer(this.model, { answered: true, correct: false });
           }
+          this.render();
+          this.__onChange();
         };
         this.solve = function() {
           var cans = this.__answer === "T" ? TrueIndexSwitch3 : FalseIndexSwitch3;
-          this.model.selectedIndex = cans;
-          this.model.state = QuestionState.solved;
+          this.__switch3.setSelectedIndex(cans);
+          this.model = revealAnswer(this.model);
+          this.render();
+          this.__onChange();
         };
         this.__initDomElement();
-        watch(this.model, "state", this.__updateState.bind(this));
-        watch(this.model, "enabled", this.__updateEnabled.bind(this));
       }
       TFQuestion2.getDefaultModel = getDefaultModel;
       TFQuestion2.QuestionStateEnum = QuestionState;
@@ -862,7 +917,7 @@
           "state": state
         };
       }
-      function QuestionContainer2(innerQuestionParams, rootElement) {
+      function QuestionContainer2(innerQuestionParams, rootElement, onChange) {
         this.model = getDefaultModel();
         this.rootDomElement = rootElement;
         this.__uid = Math.random();
@@ -870,8 +925,11 @@
         this.__wrongMarker = void 0;
         this.__correctMarker = void 0;
         this.__infoMarker = void 0;
+        this.__onChange = onChange || function() {
+        };
         this.__updateEnabled = function() {
           this.__innerQuestion.getModel().enabled = this.model.enabled;
+          this.__innerQuestion.render();
         };
         this.__updateState = function() {
           this.model.state = this.__innerQuestion.getModel().state;
@@ -893,6 +951,11 @@
             this.__infoMarker.removeClass("yaq-hidden");
           }
         };
+        this.__innerChanged = function() {
+          this.model.innerModel = this.__innerQuestion.getModel();
+          this.__updateState();
+          this.__onChange();
+        };
         this.__initDomElement = function(innerQuestionParams2) {
           var root;
           if (!this.rootDomElement) {
@@ -903,10 +966,12 @@
             root.removeClass("yaq-q");
             root.addClass("yaq-Question");
           }
-          this.__innerQuestion = new questionConstructors[innerQuestionParams2.type](innerQuestionParams2);
+          var QuestionConstructor = questionConstructors[innerQuestionParams2.type];
+          if (!QuestionConstructor)
+            throw new Error("Unsupported YAQ question type: " + innerQuestionParams2.type);
+          this.__innerQuestion = new QuestionConstructor(innerQuestionParams2, this.__innerChanged.bind(this));
           this.model.innerModel = this.__innerQuestion.getModel();
           root.append(this.__innerQuestion.getRootElement());
-          watch(this.__innerQuestion.getModel(), "state", this.__updateState.bind(this));
           this.__wrongMarker = $("<i class='fa fa-thumbs-down yaq-hidden' style='color:red; margin-right:10px;margin-left:10px;' data-role='wrongMarker'></i>");
           this.__correctMarker = $("<i class='fa fa-thumbs-up yaq-hidden' style='color:green; margin-right:10px;margin-left:10px;' data-role='correctMarker'></i>");
           this.__infoMarker = $("<i class='fa fa-info-circle yaq-hidden' style='color:blue; margin-right:10px;margin-left:10px;'  data-role='solutionMarker'></i>");
@@ -919,12 +984,17 @@
         this.reset = function() {
           this.__innerQuestion.reset();
           this.model.enabled = true;
+          this.__updateState();
         };
         this.getModel = function() {
           return this.model;
         };
         this.getRootElement = function() {
           return this.rootDomElement;
+        };
+        this.setEnabled = function(enabled) {
+          this.model.enabled = enabled;
+          this.__updateEnabled();
         };
         this.grade = function() {
           this.__innerQuestion.grade();
@@ -933,7 +1003,6 @@
           this.__innerQuestion.solve();
         };
         this.__initDomElement(innerQuestionParams);
-        watch(this.model, "enabled", this.__updateEnabled.bind(this));
       }
       QuestionContainer2.getDefaultModel = getDefaultModel;
       QuestionContainer2.QuestionStateEnum = QuestionState;
@@ -953,19 +1022,25 @@
           "state": state
         };
       }
-      function QuizActivity2(innerHTML2) {
+      function QuizActivity2(innerHTML, onChange) {
         this.model = getDefaultModel();
         this.rootDomElement = void 0;
         this.__questions = [];
+        this.__onChange = onChange || function() {
+        };
         this.__updateEnabled = function() {
           this.__questions.forEach((function(elem) {
-            elem.getModel().enabled = this.model.enabled;
+            elem.setEnabled(this.model.enabled);
           }).bind(this));
         };
         this.__updateState = function() {
           this.model.state = calculateActivityState(this.__questions.map(function(elem) {
             return elem.getModel().state;
           }));
+        };
+        this.__questionChanged = function() {
+          this.__updateState();
+          this.__onChange();
         };
         this.grade = function() {
           this.__questions.forEach(function(elem) {
@@ -988,28 +1063,37 @@
           });
           this.model.enabled = true;
         };
-        this.__initDomElement = function(innerHTML3) {
+        this.__initDomElement = function(innerHTML2) {
           var root = $('<div class="yaq-activity"></div>');
           this.rootDomElement = root;
-          root.html(innerHTML3);
+          root.html(innerHTML2);
           root.find(".yaq-q").each((function(index, elem) {
             elem = $(elem);
-            var textmodel = __b64DecodeUnicode(elem.attr("data-model"));
-            var model2 = JSON.parse(textmodel);
-            var question = new QuestionContainer(model2, elem);
-            this.__questions.push(question);
-            this.model["innerModel" + index] = question.getModel();
-            watch(question.getModel(), ["state"], this.__updateState.bind(this));
+            try {
+              var textmodel = __b64DecodeUnicode(elem.attr("data-model"));
+              var model = JSON.parse(textmodel);
+              var question = new QuestionContainer(model, elem, this.__questionChanged.bind(this));
+              this.__questions.push(question);
+              this.model["innerModel" + index] = question.getModel();
+            } catch (error) {
+              console.error("YAQ: Error while initializing question.", error);
+              elem.removeClass("yaq-q yaq-Question").addClass("yaq-question-fallback");
+              elem.append($("<span></span>").text(" Interactive question unavailable."));
+            }
           }).bind(this));
+          this.__updateState();
           this.__updateEnabled();
         };
-        this.__initDomElement(innerHTML2);
-        watch(this.model, "enabled", this.__updateEnabled.bind(this));
+        this.__initDomElement(innerHTML);
         this.getModel = function() {
           return this.model;
         };
         this.getRootElement = function() {
           return this.rootDomElement;
+        };
+        this.setEnabled = function(enabled) {
+          this.model.enabled = enabled;
+          this.__updateEnabled();
         };
       }
       QuizActivity2.getDefaultModel = getDefaultModel;
@@ -1025,7 +1109,7 @@
           "state": state
         };
       }
-      function Quiz2(innerHTML2, params) {
+      function Quiz2(innerHTML, params) {
         var saveEnabled = true;
         this.model = getDefaultModel();
         this.timestamp = 0;
@@ -1034,7 +1118,7 @@
         this.__uid = params["uid"];
         if (!this.__uid)
           throw "Missing or invalid uid field in YAQ quiz model " + this.__uid;
-        if (quizz[this.__uid])
+        if (quizIdentifiers.has(this.__uid))
           throw "YAQ quiz uid is already used " + this.__uid;
         this.rootDomElement = void 0;
         this.__activity;
@@ -1051,7 +1135,7 @@
             this.__buttonReset.removeClass("yaq-interractiveElement");
             this.__buttonSolve.removeClass("yaq-interractiveElement");
           }
-          this.__activity.getModel().enabled = this.model.enabled;
+          this.__activity.setEnabled(this.model.enabled);
         };
         this.__updateState = function() {
           var flagEnd = false;
@@ -1072,6 +1156,12 @@
             this.__buttonSolve.hide();
           }
         };
+        this.__activityChanged = function() {
+          this.model.innerModel = this.__activity.getModel();
+          this.model.state = this.__activity.getModel().state;
+          this.__updateState();
+          this.__updateModel();
+        };
         this.grade = function() {
           this.__activity.grade();
         };
@@ -1081,6 +1171,7 @@
         this.reset = function() {
           this.__activity.reset();
           this.model.enabled = true;
+          this.__updateEnabled();
         };
         this.__initEvent = function() {
           this.__buttonGrade.click(this.grade.bind(this));
@@ -1093,25 +1184,23 @@
             self.persistenceWidget.save(this.__uid, this.model);
           }
         };
-        this.setModel = function(model2) {
+        this.setModel = function(model) {
           saveEnabled = false;
-          $.extend(true, this.model, model2);
+          $.extend(true, this.model, model);
           setTimeout((function() {
             saveEnabled = true;
           }).bind(this));
         };
-        this.__initDomElement = function(innerHTML3) {
+        this.__initDomElement = function(innerHTML2) {
           var root = $("<div class='yaq-root'></div>");
           this.rootDomElement = root;
           root.append("<div class='yaq-head'>Exercice " + (this.__exerciceNumber + 1) + " : " + this.__title + "</div>");
           var mainContent = $("<div class='yaq-main-content'></div>");
           root.append(mainContent);
-          this.__activity = new QuizActivity(innerHTML3);
+          this.__activity = new QuizActivity(innerHTML2, this.__activityChanged.bind(this));
           this.model.innerModel = this.__activity.getModel();
           mainContent.append(this.__activity.getRootElement());
-          watch(this.__activity.getModel(), ["state"], (function() {
-            this.model.state = this.__activity.getModel().state;
-          }).bind(this));
+          this.model.state = this.__activity.getModel().state;
           var footer = $('<div class="yaq-footer"></div>');
           if (this.__activity.getNumberOfQuestions() === 0)
             footer.addClass("yaq-hidden");
@@ -1126,10 +1215,7 @@
           this.__updateState();
           this.__initEvent();
         };
-        this.__initDomElement(innerHTML2);
-        watch(this.model, "state", this.__updateState.bind(this));
-        watch(this.model, "enabled", this.__updateEnabled.bind(this));
-        watch(this.model, this.__updateModel.bind(this));
+        this.__initDomElement(innerHTML);
         this.getModel = (function() {
           return this.model;
         }).bind(this);
@@ -2025,11 +2111,12 @@
       s2 = latinise(allTrim2(s2));
       return similarity(s1, s2) > 0.8;
     }
-    function initFromObj(jqElement, index, innerHTML2, model2) {
-      model2.exerciceNumber = index;
-      var quiz = new Quiz(innerHTML2, model2);
+    function initFromObj(jqElement, index, innerHTML, model) {
+      model.exerciceNumber = index;
+      var quiz = new Quiz(innerHTML, model);
       quizz.push(quiz);
-      jqElement.append(quiz.getRootElement());
+      quizIdentifiers.add(quiz.__uid);
+      jqElement.empty().append(quiz.getRootElement());
     }
     var initialized = false;
     self.reloadAll = function() {
@@ -2052,21 +2139,18 @@
       initialized = true;
       self.persistenceWidget = new PersistenceWidget();
       $(".yaq").each(function(index) {
-        e = $(this);
-        innerHTML = e.html();
-        var model2 = e.attr("data-model");
+        var element = $(this);
+        var innerHTML = element.html();
+        var model = element.attr("data-model");
         try {
-          if (model2) {
-            model2 = JSON.parse(model2);
-            e.empty();
-            initFromObj(e, index, innerHTML, model2);
-          } else throw "Empty model in YAQ quiz";
-        } catch (e2) {
-          console.log(e2);
-          console.log("YAQ: Error while parsing quiz.");
-          console.log("Inner content is: " + innerHTML);
-          if (model2)
-            console.log("Top model: " + model2);
+          if (model) {
+            model = JSON.parse(model);
+            initFromObj(element, index, innerHTML, model);
+          } else throw new Error("Empty model in YAQ quiz");
+        } catch (error) {
+          console.error("YAQ: Error while initializing quiz.", error);
+          element.addClass("yaq-quiz-fallback");
+          element.append($("<p></p>").text("Interactive quiz unavailable."));
         }
       }).show();
       $(window).on("unload", (function() {

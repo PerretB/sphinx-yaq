@@ -379,7 +379,7 @@ describe("YAQ runtime characterization", () => {
     expect(isDisplayed(button(document, "Recommencer"))).toBe(true);
   });
 
-  it("characterizes a wrong true/false answer as terminal without solution reveal", async () => {
+  it("keeps a wrong true/false answer retryable", async () => {
     const { document } = await loadQuestions([{ type: "TF", answer: "T" }]);
 
     await click(document.querySelector('[data-index="2"]'));
@@ -388,11 +388,39 @@ describe("YAQ runtime characterization", () => {
     expect(
       document.querySelector('[data-role="wrongMarker"]').classList,
     ).not.toContain("yaq-hidden");
-    expect(isDisplayed(button(document, "Montrer la solution"))).toBe(false);
-    expect(isDisplayed(button(document, "Recommencer"))).toBe(true);
+    expect(isDisplayed(button(document, "Montrer la solution"))).toBe(true);
+    expect(isDisplayed(button(document, "Recommencer"))).toBe(false);
+
+    await click(document.querySelector('[data-index="0"]'));
+    await click(button(document, "Corriger"));
+
+    expect(
+      document.querySelector('[data-role="correctMarker"]').classList,
+    ).not.toContain("yaq-hidden");
+    expect(document.querySelector('[data-index="0"]').classList).toContain(
+      "yaq-switch3-button-disabled",
+    );
   });
 
-  it("characterizes duplicate quiz identifiers as accepted", async () => {
+  it("reveals the true/false solution in the actual control and disables it", async () => {
+    const { document } = await loadQuestions([{ type: "TF", answer: "T" }]);
+
+    await click(document.querySelector('[data-index="2"]'));
+    await click(button(document, "Corriger"));
+    await click(button(document, "Montrer la solution"));
+
+    expect(document.querySelector('[data-index="0"]').classList).toContain(
+      "yaq-switch3-button-active",
+    );
+    expect(document.querySelector('[data-index="0"]').classList).toContain(
+      "yaq-switch3-button-disabled",
+    );
+    expect(
+      document.querySelector('[data-role="solutionMarker"]').classList,
+    ).not.toContain("yaq-hidden");
+  });
+
+  it("rejects duplicate runtime quiz identifiers without damaging prose", async () => {
     const markup = [
       quizMarkup({ uid: "duplicate", title: "First", questions: [{ type: "TF", answer: "T" }] }),
       quizMarkup({ uid: "duplicate", title: "Second", questions: [{ type: "TF", answer: "F" }] }),
@@ -400,10 +428,9 @@ describe("YAQ runtime characterization", () => {
 
     harness = await loadRuntime(markup);
 
-    expect(harness.document.querySelectorAll(".yaq-root")).toHaveLength(2);
-    expect(harness.document.querySelectorAll(".yaq-head")[1].textContent).toContain(
-      "Second",
-    );
+    expect(harness.document.querySelectorAll(".yaq-root")).toHaveLength(1);
+    expect(harness.document.body.textContent).toContain("Question 1");
+    expect(harness.document.body.textContent).toContain("Interactive quiz unavailable.");
   });
 
   it("initializes multiple independent quizzes containing all question types", async () => {
@@ -472,9 +499,32 @@ describe("YAQ runtime characterization", () => {
     harness = await loadRuntime(markup);
 
     expect(harness.document.body.textContent).toContain("Readable fallback text");
+    expect(harness.document.body.textContent).toContain("Interactive quiz unavailable.");
     expect(harness.document.querySelectorAll(".yaq-root")).toHaveLength(1);
     expect(harness.document.querySelector(".yaq-head").textContent).toContain(
       "Healthy quiz",
     );
+  });
+
+  it("contains a broken question while activating valid questions in the same quiz", async () => {
+    const { document } = await loadQuestions([
+      { type: "unknown", answer: "x" },
+      { type: "FB", answer: "works" },
+    ]);
+
+    expect(document.body.textContent).toContain("Interactive question unavailable.");
+    expect(document.querySelectorAll(".yaq-Question")).toHaveLength(1);
+    const input = document.querySelector("input");
+    await enter(input, "works");
+    await click(button(document, "Corriger"));
+    expect(input.disabled).toBe(true);
+  });
+
+  it("does not create accidental global bindings", async () => {
+    const { window } = await loadQuestions([{ type: "FB", answer: "yes" }]);
+    expect(window.model).toBeUndefined();
+    expect(window.q).toBeUndefined();
+    expect(window.e).toBeUndefined();
+    expect(window.innerHTML).toBeUndefined();
   });
 });
