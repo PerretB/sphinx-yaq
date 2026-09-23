@@ -7,3 +7,9 @@ All notable changes to this project will be documented in this file.
 - Package the imported YAQ Sphinx extension as the `sphinx-yaq` distribution.
 - Namespace the unchanged legacy browser assets under `sphinx_yaq/`.
 - Add the legacy demonstration site and installed-wheel smoke verification.
+- Parse and validate TF, FB, and SC question models during Sphinx builds.
+- Reject malformed models, duplicate document-local quiz identifiers, and
+  non-HTML builders with source-aware diagnostics.
+- Serialize quiz data with standard JSON and escaped HTML attributes, and
+  render HTML-like titles, identifiers, choice labels, and spoiler text as
+  plain text.

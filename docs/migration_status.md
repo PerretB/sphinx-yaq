@@ -5,17 +5,18 @@ Last updated: 2026-09-23
 ## Overall state
 
 The target repository `D:\sphinx-yaq` is initialized on `main` and tracks
-`origin/main`. Batches 00 and 01 are complete: the characterized legacy
+`origin/main`. Batches 00 through 02 are complete: the characterized legacy
 implementation is now available as an installable package with namespaced
-assets, reproducible distribution metadata, and clean-wheel smoke coverage.
+assets, reproducible distribution metadata, build-time model validation, safe
+serialization, and clean-wheel smoke coverage.
 
 ## Current batch
 
-**Batch 02 — Python parsing, validation, and safe output**
+**Batch 03 — JavaScript module extraction without behavior changes**
 
 Status: ready to start.
 
-Batch specification: [`migration_batches/02-python-validation.md`](migration_batches/02-python-validation.md)
+Batch specification: [`migration_batches/03-js-module-extraction.md`](migration_batches/03-js-module-extraction.md)
 
 ## Completed work
 
@@ -57,6 +58,82 @@ Batch specification: [`migration_batches/02-python-validation.md`](migration_bat
   reusable installed-wheel smoke script.
 - Verified that PyPI currently reports no published distribution named
   `sphinx-yaq`; package-name ownership is not guaranteed until registration.
+- Added frozen typed models for TF, FB, and SC questions, parsing role text
+  with `json.loads` after restoring Docutils-protected backslashes.
+- Added build-time validation for required fields, property types, unknown
+  fields, TF answers, SC choices, fill-in sizes and flags, option combinations,
+  displayed answers, and finite ordered mathematical intervals.
+- Replaced internal Sphinx configuration mutation with document-local parsing
+  state whose temporary nesting depth is always restored with `try/finally`.
+- Added source/line-aware author diagnostics and document-scoped duplicate quiz
+  identifier detection, including the original declaration location.
+- Replaced manual JSON and HTML attribute construction with `json.dumps` and
+  the Docutils HTML translator's escaped `starttag` output.
+- Added an early builder guard with a deliberate HTML-only `ExtensionError` and
+  extension metadata declaring both parallel safety flags false.
+- Expanded the Python suite to 26 tests, including focused model tests, all
+  validation diagnostics, escaping, duplicate-ID scope, failed-context cleanup,
+  and an unsupported-builder smoke test.
+
+## Batch 02 intentional compatibility changes
+
+- Malformed JSON and non-object question declarations now produce an error at
+  the authored source line and no question node, instead of reaching the
+  browser runtime.
+- Missing, mistyped, unknown, or unsupported question fields/types now produce
+  build diagnostics. Unknown properties use an error policy rather than being
+  silently ignored.
+- TF answers other than exact `T` or `F`, SC declarations with empty choices or
+  an answer outside their choices, and non-positive/non-integer FB sizes are now
+  rejected during parsing.
+- FB flags must be recognized, non-empty, and non-duplicated; `ordered` requires
+  `sequence`; `math` and `regex` are each exclusive comparator modes. `vars` is
+  accepted only for math questions, variable math answers require it, and each
+  interval must contain two finite ascending numeric bounds. Constant math
+  answers remain valid without `vars`.
+- Duplicate quiz identifiers are now rejected within one document and report
+  the first declaration. The same identifier remains valid in different
+  documents.
+- A quiz role outside a quiz and missing or nested directive declarations now
+  use author diagnostics instead of raw exceptions or leaked parser state.
+- Non-HTML builders now stop during builder initialization with the message
+  `sphinx-yaq supports HTML builders only` rather than returning invalid role
+  results or failing on unknown nodes later.
+- Titles, quiz identifiers, SC choice labels, and plain spoiler text containing
+  HTML-like strings are escaped and render as text. Nested document content
+  rendered by Sphinx remains markup.
+- Valid legacy question declarations keep the browser runtime's existing JSON
+  field names and meaning; only insignificant flag/choice whitespace is
+  normalized.
+
+## Target Batch 02 validation
+
+```text
+npm run test:js
+  1 test file passed
+  23 tests passed
+
+npm run build:js
+  passed (the imported browser assets still intentionally have no transform step)
+
+python -m pytest
+  26 tests passed
+
+python -m build
+  built sphinx_yaq-0.1.0.tar.gz
+  built sphinx_yaq-0.1.0-py3-none-any.whl
+
+python scripts/smoke_test_wheel.py
+  passed with Python 3.12.14 and Sphinx 9.1.0
+
+python -m sphinx -E -b html examples/demo/source examples/demo/build/html
+  passed with Sphinx 9.1.0
+```
+
+The isolated package build initially could not reach PyPI from the filesystem
+sandbox; after network approval it completed with setuptools 84.0.0. The
+browser runtime and its legacy dependencies were intentionally not redesigned
+in this batch.
 
 ## Legacy validation baseline
 
@@ -162,8 +239,8 @@ Resolve before or during the named batch:
 ## Known current behavior captured by tests
 
 - A wrong true/false answer is terminal and cannot reveal the solution.
-- Duplicate quiz identifiers are accepted.
-- Invalid question JSON is accepted by Sphinx and deferred to the browser.
+- Duplicate quiz identifiers are rejected within each document.
+- Invalid question JSON is rejected by Sphinx with a source-aware diagnostic.
 - Local persistence is a no-op.
 - The runtime implements `regex`, while the prose-documented `regexp` spelling
   is ignored.
@@ -180,15 +257,14 @@ These are characterization statements, not desired final behavior.
 
 None.
 
-Recommended next action: execute Batch 02 in `D:\sphinx-yaq` to introduce
-Python parsing, validation, and safe output under its explicit compatibility
-contract.
+Recommended next action: execute Batch 03 in `D:\sphinx-yaq` to extract the
+browser runtime into editable modules without changing its behavior.
 
 ## Batch checklist
 
 - [x] Batch 00 — Complete characterization baseline
 - [x] Batch 01 — Package skeleton and reproducible build
-- [ ] Batch 02 — Python parsing, validation, and safe output
+- [x] Batch 02 — Python parsing, validation, and safe output
 - [ ] Batch 03 — JavaScript module extraction without behavior changes
 - [ ] Batch 04 — Explicit runtime state and P0 behavior fixes
 - [ ] Batch 05 — localStorage-only persistence

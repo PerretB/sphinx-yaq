@@ -58,6 +58,27 @@ describe("YAQ runtime characterization", () => {
     expect(jsdomErrors).toEqual([]);
   });
 
+  it("renders Python-escaped titles and choice labels as text", async () => {
+    const escaped = "&lt;script&gt;alert(1)&lt;/script&gt;";
+    const { document, jsdomErrors } = await loadQuestions(
+      [{ type: "SC", values: `safe,${escaped}`, answer: "safe" }],
+      // The HTML translator escapes the ampersands once more in the data
+      // attribute; the browser removes that outer layer before JSON parsing.
+      { title: escaped.replaceAll("&", "&amp;") },
+    );
+
+    expect(document.querySelector(".yaq-head").textContent).toContain(
+      "<script>alert(1)</script>",
+    );
+    expect(
+      [...document.querySelectorAll(".yaq-FBQuestion option")].map(
+        (option) => option.textContent,
+      ),
+    ).toContain("<script>alert(1)</script>");
+    expect(document.querySelector("script")).toBeNull();
+    expect(jsdomErrors).toEqual([]);
+  });
+
   it("grades an exact fill-in answer and enables restart", async () => {
     const { document, window } = await loadQuestions([
       { type: "FB", answer: "Yalta" },
