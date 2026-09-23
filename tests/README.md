@@ -12,17 +12,18 @@ npm ci
 npm run test:js
 ```
 
-The 22 tests load the existing vendored jQuery, Watch.JS, js-cookie, math.js,
-and `yaq.js` files into an isolated jsdom window. Each test closes that window
-so the interval created by Watch.JS does not leak into the next test. The suite
-characterizes all three question types and every documented matching flag,
-including retry, reveal, reset, multi-quiz, malformed-math, empty-answer, and
-special-character behavior.
+The integration tests load the vendored jQuery, Watch.JS, js-cookie, math.js,
+and generated `yaq.js` bundle into an isolated jsdom window. Each test closes
+that window so the interval created by Watch.JS does not leak into the next
+test. The suite characterizes all three question types and every documented
+matching flag, including retry, reveal, reset, multi-quiz, malformed-math,
+empty-answer, and special-character behavior.
 
-Code coverage is intentionally not reported yet: the legacy runtime is loaded
-as an evaluated browser script, so Vitest would report coverage for the test
-harness rather than meaningful coverage for `yaq.js`. Coverage should be added
-after the runtime is split into importable modules during refactoring.
+Direct Node tests import the pure grading and aggregate-state modules from
+`frontend/src/`. Vitest reports source coverage for those extracted production
+modules. `npm run test:js` first verifies that the packaged browser bundle is
+byte-for-byte current with its source; rebuild it with `npm run build:js` after
+editing frontend source.
 
 Tests deliberately record known current behavior rather than desirable future
 behavior:

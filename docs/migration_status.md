@@ -5,18 +5,19 @@ Last updated: 2026-09-23
 ## Overall state
 
 The target repository `D:\sphinx-yaq` is initialized on `main` and tracks
-`origin/main`. Batches 00 through 02 are complete: the characterized legacy
+`origin/main`. Batches 00 through 03 are complete: the characterized legacy
 implementation is now available as an installable package with namespaced
 assets, reproducible distribution metadata, build-time model validation, safe
-serialization, and clean-wheel smoke coverage.
+serialization, directly tested JavaScript grading/state modules, and a
+reproducible browser bundle.
 
 ## Current batch
 
-**Batch 03 — JavaScript module extraction without behavior changes**
+**Batch 04 — Explicit runtime state and P0 behavior fixes**
 
 Status: ready to start.
 
-Batch specification: [`migration_batches/03-js-module-extraction.md`](migration_batches/03-js-module-extraction.md)
+Batch specification: [`migration_batches/04-runtime-state.md`](migration_batches/04-runtime-state.md)
 
 ## Completed work
 
@@ -74,6 +75,32 @@ Batch specification: [`migration_batches/03-js-module-extraction.md`](migration_
 - Expanded the Python suite to 26 tests, including focused model tests, all
   validation diagnostics, escaping, duplicate-ID scope, failed-context cleanup,
   and an unsupported-builder smoke test.
+- Moved the editable browser runtime to `frontend/src/runtime.js` and extracted
+  pure answer comparison and aggregate-state calculation into importable
+  `grading.js` and `model.js` modules.
+- Added 28 direct, table-driven module tests while retaining the 23-test jsdom
+  characterization suite as the browser integration safety net.
+- Added injected random, math compiler, and fuzzy-comparator dependencies at
+  the grading boundary without changing the production sampling behavior.
+- Added a locked esbuild build that deterministically generates the packaged
+  `sphinx_yaq/_static/sphinx_yaq/yaq.js` classic-script bundle, plus a stale
+  bundle check run before every JavaScript test suite.
+- Added V8 production-source coverage for the extracted modules; the completed
+  Batch 03 suite reports 100% statements, branches, functions, and lines.
+- Included frontend sources, direct tests, and the build script in the source
+  distribution while retaining only generated runtime assets in the wheel.
+
+## Batch 03 compatibility and build decisions
+
+- Batch 03 intentionally changes no quiz behavior. The wrong-answer TF terminal
+  state, duplicate-runtime handling, ignored `regexp` spelling, sampled math
+  comparison, and generic unknown-math-variable error remain characterized for
+  later batches.
+- `frontend/src/` is the editable JavaScript source of truth. The packaged
+  `yaq.js` is generated and must not be hand-edited.
+- esbuild produces a non-minified IIFE so Sphinx can continue loading `yaq.js`
+  as a classic script. Fixed build options and the locked dependency graph make
+  regeneration deterministic; `npm run check:js` performs a byte comparison.
 
 ## Batch 02 intentional compatibility changes
 
@@ -134,6 +161,40 @@ The isolated package build initially could not reach PyPI from the filesystem
 sandbox; after network approval it completed with setuptools 84.0.0. The
 browser runtime and its legacy dependencies were intentionally not redesigned
 in this batch.
+
+## Target Batch 03 validation
+
+```text
+npm ci
+  passed; installed 109 locked packages
+
+npm run build:js
+  generated src/sphinx_yaq/_static/sphinx_yaq/yaq.js
+
+npm run test:js
+  stale-bundle check passed
+  3 test files passed
+  51 tests passed (23 integration, 28 direct module tests)
+  extracted-module coverage: 100% statements, branches, functions, and lines
+
+python -m pytest
+  26 tests passed
+
+python -m build
+  built sphinx_yaq-0.1.0.tar.gz
+  built sphinx_yaq-0.1.0-py3-none-any.whl
+
+python scripts/smoke_test_wheel.py
+  passed with Python 3.12.14 and Sphinx 9.1.0
+
+python -m sphinx -E -b html examples/demo/source examples/demo/build/html
+  passed with Sphinx 9.1.0
+```
+
+The isolated package build again required network approval to install
+setuptools 84.0.0. The wheel smoke test verified that the generated bundle is
+present and copied from the installed wheel. No test warnings or skips were
+reported.
 
 ## Legacy validation baseline
 
@@ -222,6 +283,8 @@ Python version matrix remains a Batch 09 release-readiness responsibility.
 - Initial metadata bounds are Python 3.10 or newer and Sphinx 7 or newer. The
   completed local matrix is Python 3.12.14 with Sphinx 7.0.0 and 9.1.0; Batch
   09 will expand and finalize the release matrix.
+- Editable browser code lives in `frontend/src/`; esbuild generates the
+  packaged classic-script bundle, and JavaScript tests reject stale output.
 
 ## Decisions still required
 
@@ -257,15 +320,15 @@ These are characterization statements, not desired final behavior.
 
 None.
 
-Recommended next action: execute Batch 03 in `D:\sphinx-yaq` to extract the
-browser runtime into editable modules without changing its behavior.
+Recommended next action: execute Batch 04 in `D:\sphinx-yaq` to make runtime
+state transitions explicit and deliberately fix the scheduled P0 behaviors.
 
 ## Batch checklist
 
 - [x] Batch 00 — Complete characterization baseline
 - [x] Batch 01 — Package skeleton and reproducible build
 - [x] Batch 02 — Python parsing, validation, and safe output
-- [ ] Batch 03 — JavaScript module extraction without behavior changes
+- [x] Batch 03 — JavaScript module extraction without behavior changes
 - [ ] Batch 04 — Explicit runtime state and P0 behavior fixes
 - [ ] Batch 05 — localStorage-only persistence
 - [ ] Batch 06 — Legacy dependency removal and DOM security
