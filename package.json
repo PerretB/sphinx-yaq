@@ -5,7 +5,8 @@
   "scripts": {
     "test": "npm run test:js",
     "test:js": "vitest run",
-    "test:js:watch": "vitest"
+    "test:js:watch": "vitest",
+    "build:js": "node -e \"console.log('Batch 01 preserves the imported browser assets; no JavaScript build step is required yet.')\""
   },
   "devDependencies": {
     "jsdom": "^27.0.0",

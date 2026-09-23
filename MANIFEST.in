@@ -1,0 +1,13 @@
+include CHANGELOG.md
+include LICENSE
+include README.md
+include package-lock.json
+include package.json
+include pytest.ini
+include requirements-test.txt
+include vitest.config.js
+recursive-include docs *.md
+recursive-include examples *.bat *.css *.png *.rst Makefile
+prune examples/demo/build
+recursive-include scripts *.py
+recursive-include tests *.js *.md *.py *.rst

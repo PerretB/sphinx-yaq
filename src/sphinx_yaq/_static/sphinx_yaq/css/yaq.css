@@ -1,0 +1,328 @@
+.yaq{
+	display: none;
+}
+
+
+
+.yaq-root{
+	width : 100%;
+	border-style: solid;
+    border-width: 1px;
+	margin-bottom: 10px;
+	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+.yaq-head{
+	font-size : 120%;
+	font-weight: 700;
+	color: white;
+	background-color : #6198c8;
+	width : 100%;
+	padding : 5px 10px 5px 10px;
+	margin-bottom:10px;
+}
+
+.yaq-main-content{
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+.yaq-content{
+	margin-left : 20px;
+}
+
+.yaq-TFQuestion{
+	margin-bottom: 5px;
+	margin-left:10px;
+}
+
+.yaq-questionText{
+	display: inline-block;
+}
+
+.yaq-introTFQuestions,
+.yaq-unsolvedTF-section{
+	padding-left: 14px;
+	padding-right:14px;
+}
+
+.yaq-introTFQuestions{
+	margin-bottom:5px;
+}
+
+.yaq-footer{
+	margin-top:15px;
+	margin-bottom:10px;
+	
+}
+
+.yaq-footer-status{
+	margin-left:auto;
+}
+
+.yaq-interractiveElement
+{
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 2px 5px 0 rgba(0, 0, 0, 0.19);
+	cursor: pointer;
+}
+
+.yaq-interractiveElement:hover{
+
+
+  /*border: 3px solid #253574;*/
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.34), 0 3px 10px 0 rgba(0, 0, 0, 0.25);
+  /*border-radius:3px;*/
+}
+
+.yaq-button{
+	padding-top:5px;
+	padding-bottom:5px;
+	padding-left:10px;
+	padding-right:10px;
+	margin-left:10px;
+	margin-right:10px;
+	margin-bottom:5px;
+	display: inline;
+	font-weight: 700;
+	text-align: center;
+	vertical-align: middle;
+	box-sizing: border-box;
+	color: white;
+	background-color : #6198c8;
+}
+
+.yaq-button:after {
+  content: " >";
+}
+
+.yaq-switch3{
+	vertical-align: middle;
+	width : 100px;
+	background-color : transparent;
+	display: inline-block;
+	/*border-radius : 3px;*/
+	font-size:0px;
+	/*border-width : 1px;
+	border-style	: solid;
+	border-color : #253574;*/
+	box-sizing: border-box;
+	margin-right: 15px;
+}
+
+.yaq-switch3-buttons{
+  width: 100%;
+  white-space: nowrap;
+  margin : 0px;
+  padding:0px;
+  box-sizing: border-box;
+}
+.yaq-switch3-button{
+
+  width : 33.3334%;
+  padding-top:5px;
+  padding-bottom:5px;
+  display: inline-block;
+  font-weight: 400;
+  text-align: center;
+  vertical-align: middle;
+  box-sizing: border-box;
+  font-size:initial;
+  border: 1px solid #253574;
+  /*border-radius:3px;*/
+}
+
+.yaq-switch3-button + .yaq-switch3-button
+{
+  border-left-width : 1px;
+  border-left-style	: solid;
+  border-left-color : #253574;
+}
+
+.yaq-switch3-button-active
+{
+  background-color : #6198c8;
+  color : #FFF;
+  font-weight: 700;
+}
+
+.yaq-switch3-button-notActive
+{
+  background-color : transparent;
+  color : #000;
+}
+
+.yaq-switch3-button-disabled
+{
+  background-color : #EBEBE4;
+  color : #545454;
+  font-weight: 700;
+}
+
+.yaq-correctAnswer{
+	background-color : green;
+}
+
+.yaq-wrongAnswer{
+	background-color : red;
+}
+
+.yaq-wrongTF-section, .yaq-correctTF-section{
+    border-width: 1px 0 0 0;
+    border-style: solid;
+    margin-bottom: 10px;
+}
+
+.yaq-explanation{
+	font-style: italic;
+	margin-left:120px;
+}
+
+.yaq-FBQuestions{
+	padding-left:14px;
+	padding-right:14px;
+}
+
+.yaq-FBField{
+	display: inline-block;
+	margin-right: 5px;
+}
+
+.yaq-FBText{
+	margin-right: 5px;
+}
+
+.yaq-hidden{
+	display: none;
+}
+
+
+/* Tooltip container */
+.yaq-tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+}
+
+/* Tooltip text */
+.yaq-tooltip .yaq-tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+
+    /* Position the tooltip text */
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -60px;
+
+    /* Fade in tooltip */
+    opacity: 0;
+    transition: opacity 1s;
+}
+
+/* Tooltip arrow */
+.yaq-tooltip .yaq-tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.yaq-tooltip:hover .yaq-tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* The Modal (background) */
+.yaq-modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-size : 110%;
+}
+
+/* Modal Content/Box */
+.yaq-modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    width: 80%; /* Could be more or less, depending on screen size */
+	max-width : 800px;
+}
+
+.yaq-modal-header {
+    padding: 2px 16px;
+    background-color: #6198c8;
+    color: white;
+}
+
+/* Modal Body */
+.yaq-modal-body {padding: 2px 16px;}
+
+/* Modal Footer */
+.yaq-modal-footer {
+    padding: 2px 16px;
+	min-height : 15px;
+    background-color: #6198c8;
+    color: white;
+}
+
+.yaq-persistenceWidget {
+	display: none; /* Hidden by default */
+	position: fixed;
+	z-index: 1; /* Sit on top */
+	bottom: 15px;
+	right: 15px;
+	opacity: 0.4;
+}
+
+.yaq-persistenceWidget:hover{
+	opacity: 1;
+}
+
+.yaq-spoiler-inline-hidden{
+  color: #000;
+  background-color: #000;
+  cursor: pointer;
+}
+
+
+
+.yaq-spoiler-block-title{
+  width: fit-content;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+  font-weight: 700;
+  vertical-align: middle;
+  box-sizing: border-box;
+  color: white;
+  background-color: #6198c8;
+  cursor: pointer;
+}
+
+.yaq-spoiler-block-content{
+  border-left: solid;
+  border-width: 1px;
+  padding-left: 10px;
+  padding-top: 5px;
+  margin-left: 14px;
+}

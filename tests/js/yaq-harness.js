@@ -5,7 +5,7 @@ import { dirname, resolve } from "node:path";
 import { JSDOM, VirtualConsole } from "jsdom";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const STATIC = resolve(HERE, "../../source/Sphinx_ext/_static");
+const STATIC = resolve(HERE, "../../src/sphinx_yaq/_static/sphinx_yaq");
 
 const RUNTIME_FILES = [
   resolve(STATIC, "lib/jquery-3.2.1.min.js"),

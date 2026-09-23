@@ -18,11 +18,12 @@ def test_html_build_emits_quiz_models_and_assets(app, warning):
 
     assert 'class="yaq"' in html
     assert 'class="yaq-q"' in html
-    assert "lib/watch.js" in html
-    assert "lib/js.cookie.js" in html
-    assert "math.js" in html
-    assert "yaq.js" in html
-    assert "css/yaq.css" in html
+    assert "sphinx_yaq/lib/watch.js" in html
+    assert "sphinx_yaq/lib/js.cookie.js" in html
+    assert "sphinx_yaq/lib/fbconfig.js" in html
+    assert "sphinx_yaq/math.js" in html
+    assert "sphinx_yaq/yaq.js" in html
+    assert "sphinx_yaq/css/yaq.css" in html
 
     encoded = re.search(r'class="yaq-q" data-model="([^"]+)"', html).group(1)
     model = json.loads(base64.b64decode(encoded).decode("utf-8"))
@@ -34,6 +35,7 @@ def test_html_build_copies_extension_static_files(app):
     app.build()
 
     static = Path(app.outdir) / "_static"
+    static = static / "sphinx_yaq"
     assert (static / "yaq.js").is_file()
     assert (static / "math.js").is_file()
     assert (static / "css" / "yaq.css").is_file()

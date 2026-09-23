@@ -1,8 +1,7 @@
 # Characterization test suite
 
-These tests capture the behavior of the current implementation before its
-packaging and refactoring. Production files under `source/Sphinx_ext` are not
-modified by the test harness.
+These tests capture the behavior of the imported implementation during its
+packaging and refactoring. Production files live under `src/sphinx_yaq`.
 
 ## JavaScript tests
 
@@ -51,3 +50,17 @@ roots. They verify emitted HTML, encoded question models, copied assets,
 spoilers, every example form from the legacy quiz guide, important Unicode and
 escaping cases, and the current behavior of deferring malformed question JSON
 to the browser.
+
+## Installed-wheel smoke test
+
+After `python -m build`, run:
+
+```console
+python scripts/smoke_test_wheel.py
+```
+
+The script creates a temporary virtual environment, installs the wheel, and
+builds a minimal HTML fixture outside the repository. It verifies that the
+extension import and namespaced assets come from the installed wheel rather
+than the source checkout. Pass `--sphinx VERSION` to verify a specific Sphinx
+version, including the declared lower bound.
