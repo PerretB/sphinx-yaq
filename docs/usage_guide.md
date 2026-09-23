@@ -147,7 +147,34 @@ To view the secret code, click here: :spoiler:`XYZ-1234`.
 
 ---
 
-## 4. Internationalization (`i18n`) & Custom UI Strings
+## 4. Local progress and privacy
+
+Quiz progress is saved automatically in the current browser's `localStorage`.
+It remains on the current device and browser profile: YAQ has no account,
+authentication, cookie, cloud synchronization, telemetry, or remote-write
+feature. Browsers may clear this data with the site's stored-data controls.
+
+Restarting a completed quiz removes that quiz's saved record. Site authors may
+also expose their own clear-progress control by calling
+`yaq_app.clearStoredProgress()`, which removes every YAQ record for the current
+origin without touching other applications' records. If browser storage is
+disabled, corrupt, incompatible, or full, quizzes continue to work in memory
+for the current page visit.
+
+Storage keys have this versioned form:
+
+```text
+sphinx-yaq:v1:<encoded normalized document path>:<encoded quiz ID>
+```
+
+Each JSON payload contains `schemaVersion`, a quiz-definition `fingerprint`,
+and minimal question progress under `state`. Correct-answer definitions, DOM
+content, functions, and derived rendering metadata are never stored. A record
+is ignored when its schema or fingerprint no longer matches the page.
+
+---
+
+## 5. Internationalization (`i18n`) & Custom UI Strings
 
 UI text labels (such as button captions and error messages) are configured directly in `source/Sphinx_ext/_static/yaq.js` in the `texts` object:
 

@@ -527,4 +527,59 @@ describe("YAQ runtime characterization", () => {
     expect(window.e).toBeUndefined();
     expect(window.innerHTML).toBeUndefined();
   });
+
+  it("restores correct, wrong, revealed, and unanswered progress", async () => {
+    const markup = [
+      quizMarkup({ uid: "correct", questions: [{ type: "FB", answer: "yes" }] }),
+      quizMarkup({ uid: "wrong", questions: [{ type: "FB", answer: "yes" }] }),
+      quizMarkup({ uid: "revealed", questions: [{ type: "FB", answer: "yes" }] }),
+      quizMarkup({ uid: "unanswered", questions: [{ type: "FB", answer: "yes" }] }),
+    ].join("");
+    harness = await loadRuntime(markup);
+    let roots = [...harness.document.querySelectorAll(".yaq-root")];
+
+    await enter(roots[0].querySelector("input"), "yes");
+    await click(buttonWithin(roots[0], "Corriger"));
+    await enter(roots[1].querySelector("input"), "no");
+    await click(buttonWithin(roots[1], "Corriger"));
+    await enter(roots[2].querySelector("input"), "no");
+    await click(buttonWithin(roots[2], "Corriger"));
+    await click(buttonWithin(roots[2], "Montrer la solution"));
+    await enter(roots[3].querySelector("input"), "draft");
+    harness.window.yaq_app.storage.flush();
+
+    const storageEntries = [];
+    for (let index = 0; index < harness.window.localStorage.length; index += 1) {
+      const key = harness.window.localStorage.key(index);
+      storageEntries.push([key, harness.window.localStorage.getItem(key)]);
+    }
+    harness.close();
+    harness = await loadRuntime(markup, { storageEntries });
+    roots = [...harness.document.querySelectorAll(".yaq-root")];
+
+    expect(roots[0].querySelector("input").value).toBe("yes");
+    expect(roots[0].querySelector("input").disabled).toBe(true);
+    expect(roots[0].querySelector('[data-role="correctMarker"]').classList).not.toContain("yaq-hidden");
+    expect(roots[1].querySelector("input").value).toBe("no");
+    expect(roots[1].querySelector("input").disabled).toBe(false);
+    expect(roots[1].querySelector('[data-role="wrongMarker"]').classList).not.toContain("yaq-hidden");
+    expect(roots[2].querySelector("input").value).toBe("yes");
+    expect(roots[2].querySelector("input").disabled).toBe(true);
+    expect(roots[2].querySelector('[data-role="solutionMarker"]').classList).not.toContain("yaq-hidden");
+    expect(roots[3].querySelector("input").value).toBe("draft");
+    expect(roots[3].querySelector("input").disabled).toBe(false);
+    expect(roots[3].querySelector('[data-role="wrongMarker"]').classList).toContain("yaq-hidden");
+  });
+
+  it("removes saved progress on restart", async () => {
+    const { document, window } = await loadQuestions([{ type: "FB", answer: "yes" }]);
+    await enter(document.querySelector("input"), "yes");
+    await click(button(document, "Corriger"));
+    window.yaq_app.storage.flush();
+    expect(window.localStorage.length).toBe(1);
+
+    await click(button(document, "Recommencer"));
+
+    expect(window.localStorage.length).toBe(0);
+  });
 });

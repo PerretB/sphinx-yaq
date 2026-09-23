@@ -16,3 +16,6 @@ All notable changes to this project will be documented in this file.
 - Replace Watch.JS state propagation with synchronous explicit transitions,
   keep wrong true/false answers retryable and revealable, and contain browser
   initialization failures to the affected quiz or question.
+- Remove Firebase, authentication, cloud synchronization, cookies, and their
+  assets; persist minimal quiz progress only in resilient, versioned,
+  document-scoped `localStorage` with definition compatibility checks.

@@ -224,15 +224,10 @@ def setup(app):
     static_path = os.path.join(os.path.dirname(__file__), "_static")
     app.config.html_static_path.append(static_path)
 
-    app.add_js_file("sphinx_yaq/lib/js.cookie.js")
-    app.add_js_file("https://www.gstatic.com/firebasejs/4.2.0/firebase.js")
-    app.add_js_file("https://www.gstatic.com/firebasejs/ui/2.3.0/firebase-ui-auth__fr.js")
-    app.add_js_file("sphinx_yaq/lib/fbconfig.js")
     app.add_js_file("sphinx_yaq/math.js")
     app.add_js_file("sphinx_yaq/yaq.js")
 
     app.add_css_file("https://use.fontawesome.com/8916f45f90.css")
-    app.add_css_file("https://cdn.firebase.com/libs/firebaseui/2.3.0/firebaseui.css")
     app.add_css_file("sphinx_yaq/css/yaq.css")
 
     app.add_node(Quiz, html=(visit_quiz_node, depart_quiz_node))

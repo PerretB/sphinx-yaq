@@ -6,10 +6,12 @@
     "test": "npm run test:js",
     "test:js": "npm run check:js && vitest run --coverage",
     "test:js:watch": "vitest",
+    "test:e2e": "playwright test",
     "build:js": "node scripts/build-js.mjs",
     "check:js": "node scripts/build-js.mjs --check"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@vitest/coverage-v8": "^4.1.11",
     "esbuild": "^0.28.2",
     "jsdom": "^27.0.0",

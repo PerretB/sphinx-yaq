@@ -162,6 +162,213 @@
     return activityState;
   }
 
+  // frontend/src/storage.js
+  var STORAGE_SCHEMA_VERSION = 1;
+  var STORAGE_NAMESPACE = "sphinx-yaq";
+  var DEFAULT_SAVE_DELAY = 250;
+  function normalizeDocumentScope(pathname) {
+    try {
+      const normalized = new URL(pathname || "/", "https://sphinx-yaq.invalid").pathname.replace(/\/{2,}/g, "/");
+      return normalized.length > 1 ? normalized.replace(/\/$/, "") : "/";
+    } catch (_error) {
+      return "/";
+    }
+  }
+  function hashString(value) {
+    let hash = 2166136261;
+    for (let index = 0; index < value.length; index += 1) {
+      hash ^= value.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(16).padStart(8, "0");
+  }
+  function fingerprintQuizDefinition(questionDefinitions) {
+    return `fnv1a-${hashString(JSON.stringify(questionDefinitions))}`;
+  }
+  function storageKey(documentScope, quizId) {
+    return [
+      STORAGE_NAMESPACE,
+      `v${STORAGE_SCHEMA_VERSION}`,
+      encodeURIComponent(normalizeDocumentScope(documentScope)),
+      encodeURIComponent(quizId)
+    ].join(":");
+  }
+  function validPayload(payload, expectedFingerprint) {
+    return Boolean(
+      payload && payload.schemaVersion === STORAGE_SCHEMA_VERSION && payload.fingerprint === expectedFingerprint && payload.state && typeof payload.state === "object" && !Array.isArray(payload.state)
+    );
+  }
+  var QuizStorage = class {
+    constructor({
+      globalObject = globalThis,
+      documentScope = ((_a) => (_a = globalObject == null ? void 0 : globalObject.location) == null ? void 0 : _a.pathname)() || "/",
+      saveDelay = DEFAULT_SAVE_DELAY,
+      setTimer = ((_b) => (_b = globalObject == null ? void 0 : globalObject.setTimeout) == null ? void 0 : _b.bind(globalObject))() || setTimeout,
+      clearTimer = ((_c) => (_c = globalObject == null ? void 0 : globalObject.clearTimeout) == null ? void 0 : _c.bind(globalObject))() || clearTimeout
+    } = {}) {
+      this.globalObject = globalObject;
+      this.documentScope = normalizeDocumentScope(documentScope);
+      this.saveDelay = saveDelay;
+      this.setTimer = setTimer;
+      this.clearTimer = clearTimer;
+      this.pending = /* @__PURE__ */ new Map();
+      this.lastAvailable = void 0;
+    }
+    key(quizId) {
+      return storageKey(this.documentScope, quizId);
+    }
+    getStorage() {
+      try {
+        const storage = this.globalObject.localStorage;
+        if (!storage) {
+          this.lastAvailable = false;
+          return null;
+        }
+        return storage;
+      } catch (_error) {
+        this.lastAvailable = false;
+        return null;
+      }
+    }
+    isAvailable() {
+      const storage = this.getStorage();
+      if (!storage) {
+        return false;
+      }
+      const probe = `${STORAGE_NAMESPACE}:probe`;
+      try {
+        storage.setItem(probe, probe);
+        storage.removeItem(probe);
+        this.lastAvailable = true;
+        return true;
+      } catch (_error) {
+        this.lastAvailable = false;
+        return false;
+      }
+    }
+    get available() {
+      return this.isAvailable();
+    }
+    load(quizId, expectedFingerprint) {
+      const storage = this.getStorage();
+      if (!storage) {
+        return null;
+      }
+      try {
+        const serialized = storage.getItem(this.key(quizId));
+        if (serialized === null) {
+          this.lastAvailable = true;
+          return null;
+        }
+        const payload = JSON.parse(serialized);
+        if (!validPayload(payload, expectedFingerprint)) {
+          return null;
+        }
+        this.lastAvailable = true;
+        return payload.state;
+      } catch (_error) {
+        this.lastAvailable = false;
+        return null;
+      }
+    }
+    save(quizId, fingerprint, state) {
+      let serialized;
+      try {
+        serialized = JSON.stringify({
+          schemaVersion: STORAGE_SCHEMA_VERSION,
+          fingerprint,
+          state
+        });
+      } catch (_error) {
+        return false;
+      }
+      const key = this.key(quizId);
+      this.cancel(key);
+      const timer = this.setTimer(() => {
+        this.pending.delete(key);
+        this.write(key, serialized);
+      }, this.saveDelay);
+      this.pending.set(key, { timer, serialized });
+      return true;
+    }
+    write(key, serialized) {
+      const storage = this.getStorage();
+      if (!storage) {
+        return false;
+      }
+      try {
+        storage.setItem(key, serialized);
+        this.lastAvailable = true;
+        return true;
+      } catch (_error) {
+        this.lastAvailable = false;
+        return false;
+      }
+    }
+    flush(quizId) {
+      const keys = quizId === void 0 ? [...this.pending.keys()] : [this.key(quizId)];
+      let succeeded = true;
+      for (const key of keys) {
+        const entry = this.pending.get(key);
+        if (!entry) {
+          continue;
+        }
+        this.clearTimer(entry.timer);
+        this.pending.delete(key);
+        succeeded = this.write(key, entry.serialized) && succeeded;
+      }
+      return succeeded;
+    }
+    cancel(key) {
+      const entry = this.pending.get(key);
+      if (entry) {
+        this.clearTimer(entry.timer);
+        this.pending.delete(key);
+      }
+    }
+    remove(quizId) {
+      const key = this.key(quizId);
+      this.cancel(key);
+      const storage = this.getStorage();
+      if (!storage) {
+        return false;
+      }
+      try {
+        storage.removeItem(key);
+        this.lastAvailable = true;
+        return true;
+      } catch (_error) {
+        this.lastAvailable = false;
+        return false;
+      }
+    }
+    clearAll() {
+      for (const entry of this.pending.values()) {
+        this.clearTimer(entry.timer);
+      }
+      this.pending.clear();
+      const storage = this.getStorage();
+      if (!storage) {
+        return false;
+      }
+      try {
+        const keys = [];
+        for (let index = 0; index < storage.length; index += 1) {
+          const key = storage.key(index);
+          if (key == null ? void 0 : key.startsWith(`${STORAGE_NAMESPACE}:`)) {
+            keys.push(key);
+          }
+        }
+        keys.forEach((key) => storage.removeItem(key));
+        this.lastAvailable = true;
+        return true;
+      } catch (_error) {
+        this.lastAvailable = false;
+        return false;
+      }
+    }
+  };
+
   // frontend/src/runtime.js
   var yaq_app = (function() {
     var self = {};
@@ -193,304 +400,9 @@
     function arrayClear(array) {
       array.splice(0, array.length);
     }
-    function isObject(val) {
-      if (val === null) {
-        return false;
-      }
-      return typeof val === "function" || typeof val === "object";
+    function isQuestionState(value) {
+      return value === QuestionState.unsolved || value === QuestionState.correct || value === QuestionState.wrong || value === QuestionState.solved;
     }
-    var PersistenceWidget = /* @__PURE__ */ (function() {
-      var localSaveProvider = function() {
-        this.save = function(key, timestamp, payload, sucessCallback, errorCallback) {
-          try {
-            if (sucessCallback)
-              sucessCallback();
-          } catch (e) {
-            console.log(e);
-            if (errorCallback)
-              errorCallback(e);
-          }
-        };
-        this.getLatestTimestamp = function(key, sucessCallback, errorCallback) {
-          var value = void 0;
-          if (value)
-            value = +value.t;
-          else value = -1;
-          sucessCallback(value);
-        };
-        this.load = function(key, sucessCallback, errorCallback) {
-          var value = void 0;
-          if (value) {
-            try {
-              value = JSON.parse(value);
-              sucessCallback(value);
-            } catch (e) {
-              if (errorCallback)
-                errorCallback(e);
-            }
-          } else {
-            if (errorCallback)
-              errorCallback("Cookie read: no such key " + key);
-          }
-        };
-      };
-      var firebaseSaveProvider = function(user) {
-        var userId = firebase.auth().currentUser.uid;
-        var name = user.displayName;
-        var email = user.email;
-        var path = window.location.pathname;
-        function updateUserData() {
-          try {
-            database.ref("users/" + userId + "/profile/").set({ name, email });
-          } catch (e) {
-            console.log("failed saving user data");
-          }
-        }
-        updateUserData();
-        this.transformKey = function(key) {
-          return (path + "-" + key).replace(/[\.\$\#\[\]\/]*/g, "");
-        };
-        this.save = function(key, timestamp, payload, sucessCallback, errorCallback) {
-          try {
-            key = this.transformKey(key);
-            var updates = {};
-            updates["/users/" + userId + "/times/" + key] = timestamp;
-            updates["/users/" + userId + "/quizz/" + key] = payload;
-            database.ref().update(updates);
-            if (sucessCallback)
-              sucessCallback();
-          } catch (e) {
-            console.log(e);
-            console.log("failed saving user data");
-            if (errorCallback)
-              errorCallback(e);
-          }
-        };
-        this.getLatestTimestamp = function(key, sucessCallback, errorCallback) {
-          key = this.transformKey(key);
-          firebase.database().ref("users/" + userId + "/times/" + key).once("value").then(
-            (function(sucessCallback2, snapshot) {
-              sucessCallback2(+snapshot.val());
-            }).bind(this, sucessCallback)
-          );
-        };
-        this.load = function(key, sucessCallback, errorCallback) {
-          key = this.transformKey(key);
-          firebase.database().ref("users/" + userId + "/quizz/" + key).once("value").then(
-            (function(sucessCallback2, snapshot) {
-              sucessCallback2(JSON.parse(snapshot.val()));
-            }).bind(this, sucessCallback)
-          );
-        };
-      };
-      function PersistenceWidget2() {
-        this.localProvider = new localSaveProvider();
-        this.provider = void 0;
-        this.localPendingSaves = {};
-        this.pendingSaves = {};
-        var modal;
-        var localDelay = 2 * 1e3;
-        var delay = 2 * 60 * 1e3;
-        var widget;
-        var loginButton;
-        var logoutButton;
-        var chooseLocal = false;
-        var deactivateFirebase = true;
-        function saveOne(provider, store, key) {
-          var timestamp = +/* @__PURE__ */ new Date();
-          var value = store[key];
-          delete store[key];
-          var payload;
-          if (isObject(value))
-            payload = JSON.stringify(value);
-          else payload = value;
-          provider.save(key, timestamp, payload);
-        }
-        function flushStore(provider, store, key) {
-          if (provider) {
-            var keys;
-            if (key)
-              keys = [key];
-            else
-              keys = Object.keys(store);
-            keys.forEach(
-              saveOne.bind(this, provider, store)
-            );
-          }
-        }
-        this.flushSaveLocal = function(key) {
-          flushStore(this.localProvider, this.localPendingSaves, key);
-        };
-        this.flushSaveCloud = function(key) {
-          if (this.provider)
-            flushStore(this.provider, this.pendingSaves, key);
-        };
-        this.flushSave = function(cloud, key) {
-          if (cloud)
-            this.flushSaveCloud(key);
-          this.flushSaveLocal(key);
-        };
-        this.saveLocal = function(key, payload) {
-          if ($.isEmptyObject(this.localPendingSaves))
-            setTimeout(this.flushSave.bind(this, false), localDelay);
-          this.localPendingSaves[key] = payload;
-        };
-        this.saveCloud = function(key, payload) {
-          if ($.isEmptyObject(this.pendingSaves))
-            setTimeout(this.flushSave.bind(this, true), delay);
-          this.pendingSaves[key] = payload;
-        };
-        this.save = function(key, payload) {
-          this.saveLocal(key, payload);
-          this.saveCloud(key, payload);
-        };
-        this.load = function(key, sucessCallback, errorCallback) {
-          this.localProvider.getLatestTimestamp(
-            key,
-            (function onSucess(key2, sucessCallback2, errorCallback2, localTimeStamp) {
-              if (this.provider) {
-                this.provider.getLatestTimestamp(
-                  key2,
-                  (function onSucess2(key3, sucessCallback3, errorCallback3, localTimeStamp2, cloudTimestamp) {
-                    if (isNaN(localTimeStamp2) && isNaN(cloudTimeStamp))
-                      return;
-                    if (isNaN(localTimeStamp2))
-                      localTimeStamp2 = 0;
-                    if (isNaN(cloudTimeStamp))
-                      cloudTimeStamp = 0;
-                    if (localTimeStamp2 > cloudTimestamp) {
-                      this.localProvider.load(key3, sucessCallback3, errorCallback3);
-                    } else {
-                      this.provider.load(key3, sucessCallback3, errorCallback3);
-                    }
-                  }).bind(this, key2, sucessCallback2, errorCallback2, localTimeStamp)
-                );
-              } else {
-                this.localProvider.load(key2, sucessCallback2, errorCallback2);
-              }
-            }).bind(this, key, sucessCallback, errorCallback)
-          );
-        };
-        this.__sync = function(key, payloadTimestamp, payload, updatePayloadFunction, localTimestamp, cloudTimestamp) {
-          if (isNaN(localTimestamp))
-            localTimestamp = 0;
-          if (isNaN(cloudTimestamp))
-            cloudTimestamp = 0;
-          if (localTimestamp === 0 && cloudTimestamp === 0 && payloadTimestamp === 0)
-            return;
-          if (payloadTimestamp >= localTimestamp && payloadTimestamp >= cloudTimestamp) {
-            this.save(key, payload);
-          } else if (localTimestamp >= payloadTimestamp && localTimestamp >= cloudTimestamp) {
-            this.localProvider.load(key, (function(key2, updatePayloadFunction2, value) {
-              this.saveCloud(key2, value);
-              this.flushSave(true);
-              updatePayloadFunction2(value);
-            }).bind(this, key, updatePayloadFunction));
-          } else if (cloudTimestamp >= payloadTimestamp && cloudTimestamp >= localTimestamp) {
-            this.provider.load(key, (function(key2, updatePayloadFunction2, value) {
-              this.saveLocal(key2, value);
-              this.flushSave();
-              updatePayloadFunction2(value);
-            }).bind(this, key, updatePayloadFunction));
-          }
-        };
-        this.sync = function(key, payloadTimestamp, payload, updatePayloadFunction) {
-          this.localProvider.getLatestTimestamp(
-            key,
-            (function onSucess(key2, payloadTimestamp2, payload2, updatePayloadFunction2, localTimestamp) {
-              if (this.provider) {
-                this.provider.getLatestTimestamp(
-                  key2,
-                  (function onSucess2(key3, payloadTimestamp3, payload3, updatePayloadFunction3, localTimestamp2, cloudTimestamp) {
-                    this.__sync(key3, payloadTimestamp3, payload3, updatePayloadFunction3, localTimestamp2, cloudTimestamp);
-                  }).bind(this, key2, payloadTimestamp2, payload2, updatePayloadFunction2, localTimestamp)
-                );
-              } else {
-                this.__sync(key2, payloadTimestamp2, payload2, updatePayloadFunction2, localTimestamp, -1);
-              }
-            }).bind(this, key, payloadTimestamp, payload, updatePayloadFunction)
-          );
-        };
-        this.setProvider = function(_provider) {
-          this.provider = _provider;
-          if (_provider) {
-            loginButton.addClass("yaq-hidden");
-            logoutButton.removeClass("yaq-hidden");
-          } else {
-            loginButton.removeClass("yaq-hidden");
-            logoutButton.addClass("yaq-hidden");
-          }
-        };
-        this.logWithFirebase = function(user) {
-          if (!user.email.endsWith("esiee.fr")) {
-            firebase.auth().currentUser.delete();
-            this.setProvider(void 0);
-            alert("Seul les comptes associés à une adresse esiee.fr sont permis.");
-          } else {
-            this.setProvider(new firebaseSaveProvider(user));
-          }
-          self.SyncAll();
-        };
-        this.login = function() {
-          fbInitUI((function(user) {
-            widget.show();
-            modal.hide();
-          }).bind(this));
-          widget.hide();
-          modal.show();
-        };
-        function asChosenLocal() {
-          return Cookies.get("LocalChoice");
-        }
-        function setLocalChoice(value) {
-          Cookies.set("LocalChoice", value, { expires: 1, path: "/" });
-        }
-        this.logout = function() {
-          setLocalChoice(false);
-          this.flushSave(true);
-          setTimeout(firebase.auth().signOut(), 250);
-        };
-        this.init = function() {
-          if (!deactivateFirebase && firebase && firebase.apps.length !== 0) {
-            modal = $('<div id="pwModal" class="yaq-modal"></div>');
-            var content = $('<div class="yaq-modal-content"></div>');
-            modal.append(content);
-            content.append('<div class="yaq-modal-header"><h2>Option de sauvegarde</h2></div>');
-            content.append("<div class='yaq-modal-body'><p>Pour sauvegarder vos données dans le cloud et retrouver vos données où que vous soyez (compte esiee.fr nécesssaire)<span id='firebaseui-container'></span></p><p>Sinon <span class='yaq-button yaq-interractiveElement' id='localModeBtn'>continuez  sans sauvegarde</span></p></div>");
-            content.append('<div class="yaq-modal-footer"></div>');
-            content.find("#localModeBtn").click((function() {
-              modal.hide();
-              widget.show();
-              setLocalChoice(true);
-            }).bind(this));
-            $("body").append(modal);
-            firebase.auth().onAuthStateChanged((function(user) {
-              if (!user) {
-                this.setProvider(void 0);
-                if (!asChosenLocal())
-                  this.login();
-              } else {
-                this.logWithFirebase(user);
-              }
-            }).bind(this));
-            widget = $('<div class="yaq-persistenceWidget"></div>');
-            widget.append('<span id="wmsg"></span>');
-            loginButton = $("<span class='yaq-button yaq-interractiveElement'>Connexion</span>");
-            logoutButton = $("<span class='yaq-button yaq-interractiveElement yaq-hidden'>Deconnexion</span>");
-            loginButton.click(this.login.bind(this));
-            logoutButton.click(this.logout.bind(this));
-            widget.append(loginButton);
-            widget.append(logoutButton);
-            $("body").append(widget);
-            widget.show();
-          } else {
-            setLocalChoice(true);
-          }
-        };
-        this.init();
-      }
-      return PersistenceWidget2;
-    })();
     var Switch3 = (function() {
       function getDefaultModelSwitch3(selectedIndex, enabled) {
         enabled = getDefault(enabled, true);
@@ -670,6 +582,15 @@
         this.getModel = function() {
           return this.model;
         };
+        this.getPersistenceState = function() {
+          return { type: "FB", enabled: this.model.enabled, state: this.model.state, value: this.model.value };
+        };
+        this.restore = function(state) {
+          if (!state || state.type !== "FB" || typeof state.enabled !== "boolean" || !isQuestionState(state.state) || typeof state.value !== "string") return false;
+          this.model = { enabled: state.enabled, state: state.state, value: state.value };
+          this.render();
+          return true;
+        };
         this.getRootElement = function() {
           return this.rootDomElement;
         };
@@ -801,6 +722,15 @@
         this.getModel = function() {
           return this.model;
         };
+        this.getPersistenceState = function() {
+          return { type: "SC", enabled: this.model.enabled, state: this.model.state, selectedValue: this.model.selectedValue };
+        };
+        this.restore = function(state) {
+          if (!state || state.type !== "SC" || typeof state.enabled !== "boolean" || !isQuestionState(state.state) || typeof state.selectedValue !== "string") return false;
+          this.model = { enabled: state.enabled, state: state.state, selectedValue: state.selectedValue };
+          this.render();
+          return true;
+        };
         this.getRootElement = function() {
           return this.rootDomElement;
         };
@@ -876,6 +806,21 @@
         };
         this.getModel = function() {
           return this.model;
+        };
+        this.getPersistenceState = function() {
+          return {
+            type: "TF",
+            enabled: this.model.enabled,
+            state: this.model.state,
+            selectedIndex: this.__switch3.getModel().selectedIndex
+          };
+        };
+        this.restore = function(state) {
+          if (!state || state.type !== "TF" || typeof state.enabled !== "boolean" || !isQuestionState(state.state) || ![0, 1, 2].includes(state.selectedIndex)) return false;
+          this.model = { enabled: state.enabled, state: state.state };
+          this.__switch3.setSelectedIndex(state.selectedIndex);
+          this.render();
+          return true;
         };
         this.getRootElement = function() {
           return this.rootDomElement;
@@ -989,6 +934,16 @@
         this.getModel = function() {
           return this.model;
         };
+        this.getPersistenceState = function() {
+          return this.__innerQuestion.getPersistenceState();
+        };
+        this.restore = function(state) {
+          if (!this.__innerQuestion.restore(state)) return false;
+          this.model.innerModel = this.__innerQuestion.getModel();
+          this.model.enabled = this.model.innerModel.enabled;
+          this.__updateState();
+          return true;
+        };
         this.getRootElement = function() {
           return this.rootDomElement;
         };
@@ -1091,6 +1046,21 @@
         this.getRootElement = function() {
           return this.rootDomElement;
         };
+        this.getPersistenceState = function() {
+          return {
+            questions: this.__questions.map(function(question) {
+              return question.getPersistenceState();
+            })
+          };
+        };
+        this.restore = function(state) {
+          if (!state || !Array.isArray(state.questions) || state.questions.length !== this.__questions.length) return false;
+          for (var index = 0; index < this.__questions.length; index++) {
+            if (!this.__questions[index].restore(state.questions[index])) return false;
+          }
+          this.__updateState();
+          return true;
+        };
         this.setEnabled = function(enabled) {
           this.model.enabled = enabled;
           this.__updateEnabled();
@@ -1109,10 +1079,9 @@
           "state": state
         };
       }
-      function Quiz2(innerHTML, params) {
-        var saveEnabled = true;
+      function Quiz2(innerHTML, params, fingerprint) {
         this.model = getDefaultModel();
-        this.timestamp = 0;
+        this.__fingerprint = fingerprint;
         this.__exerciceNumber = getDefault(params["exerciceNumber"], 0);
         this.__title = getDefault(params["title"], "");
         this.__uid = params["uid"];
@@ -1172,6 +1141,7 @@
           this.__activity.reset();
           this.model.enabled = true;
           this.__updateEnabled();
+          self.storage.remove(this.__uid);
         };
         this.__initEvent = function() {
           this.__buttonGrade.click(this.grade.bind(this));
@@ -1179,17 +1149,17 @@
           this.__buttonReset.click(this.reset.bind(this));
         };
         this.__updateModel = function() {
-          this.timestamp = +/* @__PURE__ */ new Date();
-          if (saveEnabled) {
-            self.persistenceWidget.save(this.__uid, this.model);
-          }
+          self.storage.save(this.__uid, this.__fingerprint, this.getPersistenceState());
         };
-        this.setModel = function(model) {
-          saveEnabled = false;
-          $.extend(true, this.model, model);
-          setTimeout((function() {
-            saveEnabled = true;
-          }).bind(this));
+        this.getPersistenceState = function() {
+          return { activity: this.__activity.getPersistenceState() };
+        };
+        this.restore = function(state) {
+          if (!state || !this.__activity.restore(state.activity)) return false;
+          this.model.innerModel = this.__activity.getModel();
+          this.model.state = this.model.innerModel.state;
+          this.__updateState();
+          return true;
         };
         this.__initDomElement = function(innerHTML2) {
           var root = $("<div class='yaq-root'></div>");
@@ -2113,31 +2083,28 @@
     }
     function initFromObj(jqElement, index, innerHTML, model) {
       model.exerciceNumber = index;
-      var quiz = new Quiz(innerHTML, model);
+      var definitions = jqElement.find(".yaq-q").map(function(_index, element) {
+        return $(element).attr("data-model");
+      }).get();
+      var fingerprint = fingerprintQuizDefinition(definitions);
+      var quiz = new Quiz(innerHTML, model, fingerprint);
+      var storedState = self.storage.load(quiz.__uid, fingerprint);
+      if (storedState && !quiz.restore(storedState)) self.storage.remove(quiz.__uid);
       quizz.push(quiz);
       quizIdentifiers.add(quiz.__uid);
       jqElement.empty().append(quiz.getRootElement());
     }
     var initialized = false;
-    self.reloadAll = function() {
-      for (var i = 0; i < quizz.length; i++) {
-        var quiz = quizz[i];
-        self.persistenceWidget.load(quiz.__uid, quiz.setModel.bind(quiz));
-      }
+    self.storage = void 0;
+    self.clearStoredProgress = function() {
+      return self.storage ? self.storage.clearAll() : false;
     };
-    self.SyncAll = function() {
-      for (var i = 0; i < quizz.length; i++) {
-        var quiz = quizz[i];
-        self.persistenceWidget.sync(quiz.__uid, quiz.timestamp, quiz.model, quiz.setModel.bind(quiz));
-      }
-    };
-    self.persistenceWidget = void 0;
     self.init = function() {
       if (initialized) {
         throw "Yaq init method cannot be called twice !";
       }
       initialized = true;
-      self.persistenceWidget = new PersistenceWidget();
+      self.storage = new QuizStorage({ globalObject: window });
       $(".yaq").each(function(index) {
         var element = $(this);
         var innerHTML = element.html();
@@ -2154,7 +2121,7 @@
         }
       }).show();
       $(window).on("unload", (function() {
-        self.persistenceWidget.flushSave(true);
+        self.storage.flush();
       }).bind(this));
     };
     return self;

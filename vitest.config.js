@@ -5,7 +5,11 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary"],
-      include: ["frontend/src/grading.js", "frontend/src/model.js"],
+      include: [
+        "frontend/src/grading.js",
+        "frontend/src/model.js",
+        "frontend/src/storage.js",
+      ],
       thresholds: {
         statements: 90,
         branches: 80,

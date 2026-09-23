@@ -9,7 +9,6 @@ const STATIC = resolve(HERE, "../../src/sphinx_yaq/_static/sphinx_yaq");
 
 const RUNTIME_FILES = [
   resolve(STATIC, "lib/jquery-3.2.1.min.js"),
-  resolve(STATIC, "lib/js.cookie.js"),
   resolve(STATIC, "math.js"),
   resolve(STATIC, "yaq.js"),
 ];
@@ -41,7 +40,10 @@ export async function settle(window, cycles = 8) {
   }
 }
 
-export async function loadRuntime(markup) {
+export async function loadRuntime(markup, {
+  storageEntries = [],
+  url = "https://example.test/course/index.html",
+} = {}) {
   const jsdomErrors = [];
   const virtualConsole = new VirtualConsole();
   virtualConsole.on("jsdomError", (error) => jsdomErrors.push(error));
@@ -49,9 +51,13 @@ export async function loadRuntime(markup) {
   const dom = new JSDOM(`<!doctype html><html><body>${markup}</body></html>`, {
     pretendToBeVisual: true,
     runScripts: "outside-only",
-    url: "https://example.test/course/index.html",
+    url,
     virtualConsole,
   });
+
+  for (const [key, value] of storageEntries) {
+    dom.window.localStorage.setItem(key, value);
+  }
 
   for (const source of RUNTIME_SOURCES) {
     dom.window.eval(source);

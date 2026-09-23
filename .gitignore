@@ -222,3 +222,5 @@ __marimo__/
 
 # Node test dependencies
 node_modules/
+test-results/
+playwright-report/

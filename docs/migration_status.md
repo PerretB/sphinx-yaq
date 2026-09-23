@@ -5,20 +5,21 @@ Last updated: 2026-09-23
 ## Overall state
 
 The target repository `D:\sphinx-yaq` is initialized on `main` and tracks
-`origin/main`. Batches 00 through 04 are complete: the characterized legacy
+`origin/main`. Batches 00 through 05 are complete: the characterized legacy
 implementation is now available as an installable package with namespaced
 assets, reproducible distribution metadata, build-time model validation, safe
 serialization, directly tested JavaScript grading/state modules, and a
-reproducible browser bundle. Batch 04 replaced watcher-driven state with
-explicit synchronous transitions and fixed the scheduled P0 runtime defects.
+reproducible browser bundle. Batch 05 removed all Firebase, authentication,
+cloud synchronization, and cookie paths and added resilient local-only
+persistence with real-browser reload coverage.
 
 ## Current batch
 
-**Batch 05 — Local-only persistence**
+**Batch 06 — Legacy dependency removal and DOM security**
 
 Status: ready to start.
 
-Batch specification: [`migration_batches/05-local-storage.md`](migration_batches/05-local-storage.md)
+Batch specification: [`migration_batches/06-dependency-security.md`](migration_batches/06-dependency-security.md)
 
 ## Completed work
 
@@ -102,6 +103,31 @@ Batch specification: [`migration_batches/05-local-storage.md`](migration_batches
 - Expanded the JavaScript suite to 57 tests, including direct transition tests
   and jsdom coverage for TF retry/reveal, duplicate IDs, isolated failures, and
   accidental global bindings.
+- Deleted Firebase configuration, authentication and synchronization logic,
+  cookie persistence, remote Firebase asset registration, and obsolete
+  persistence/login modal styles and assets.
+- Added `QuizStorage`, a versioned localStorage adapter with normalized
+  document scope, quiz isolation, definition fingerprints, debounced saves,
+  guarded load/save/remove/clear operations, and in-memory fallback behavior.
+- Persisted only explicit minimal question state, restored correct, wrong,
+  revealed, and unanswered progress, and made Restart delete its quiz record.
+- Added storage unit tests, jsdom restoration and restart tests, and a
+  Playwright test that restores progress after reloading generated demo HTML.
+
+## Batch 05 persistence decisions
+
+- Local persistence is enabled by default and requires no user account or
+  consent cookie. It is optional at runtime: denial, corruption, incompatibility,
+  and quota errors leave the quiz fully usable in memory.
+- Keys use `sphinx-yaq:v1:<encoded normalized path>:<encoded quiz ID>`; the
+  browser origin supplies the outer isolation boundary.
+- Payloads use schema version 1 and contain only a definition fingerprint and
+  minimal answer/state data. Correct answers and rendering metadata are not
+  persisted.
+- Restart removes the current quiz record. `yaq_app.clearStoredProgress()` is
+  the optional origin-wide YAQ clearing API.
+- Definition fingerprints are deterministic FNV-1a hashes over ordered encoded
+  question definitions. A mismatch ignores the saved record.
 
 ## Batch 04 intentional compatibility changes and decisions
 
@@ -244,6 +270,35 @@ The Python suite used Python 3.12.14 from the bundled Codex runtime because
 reported. The batch did not add an e2e harness, so browser validation remains
 deferred as specified by the batch contract.
 
+## Target Batch 05 validation
+
+```text
+npm run build:js
+  generated src/sphinx_yaq/_static/sphinx_yaq/yaq.js
+
+npm run test:js
+  stale-bundle check passed
+  4 test files passed
+  70 tests passed (28 runtime integration, 11 storage, 31 grading/state)
+  storage coverage: 94.26% statements, 91.66% branches, 100% functions,
+  94.11% lines
+
+python -m pytest
+  26 tests passed
+
+python -m sphinx -E -b html examples/demo/source examples/demo/build/html
+  passed with Sphinx 9.1.0
+
+npm run test:e2e
+  1 Playwright Chromium test passed using installed Chrome
+```
+
+The generated demo HTML and packaged runtime were searched for Firebase,
+authentication, cloud, cookie, and modal references; none remain. The
+Playwright run reported only Node's harmless `NO_COLOR`/`FORCE_COLOR` warning,
+with no browser-console errors. No tests were skipped and no Sphinx warnings
+were reported.
+
 ## Legacy validation baseline
 
 ```text
@@ -305,8 +360,9 @@ python -m sphinx -b html examples/demo/source examples/demo/build/html
 
 Wheel inspection found the package module, CSS, YAQ runtime, math.js, jQuery,
 Watch.JS, js-cookie, and the legacy Firebase configuration under the
-`sphinx_yaq/_static/sphinx_yaq/` namespace. Firebase remains only to preserve
-Batch 01 behavior and is scheduled for removal in Batch 06. The source
+`sphinx_yaq/_static/sphinx_yaq/` namespace. This records the historical Batch
+01 result; Watch.JS was removed in Batch 04 and the cookie/Firebase assets were
+removed in Batch 05. The source
 distribution contains package, test, demo, documentation, and build sources;
 the wheel contains runtime package files only.
 
@@ -333,6 +389,10 @@ Python version matrix remains a Batch 09 release-readiness responsibility.
   09 will expand and finalize the release matrix.
 - Editable browser code lives in `frontend/src/`; esbuild generates the
   packaged classic-script bundle, and JavaScript tests reject stale output.
+- Local persistence is enabled by default, scoped by origin, normalized path,
+  and quiz ID, and guarded by schema version 1 plus a definition fingerprint.
+- Restart removes the quiz record; clearing all YAQ records for an origin is
+  available through `yaq_app.clearStoredProgress()`.
 
 ## Decisions still required
 
@@ -340,10 +400,6 @@ Resolve before or during the named batch:
 
 | Decision | Needed by | Current recommendation |
 | --- | --- | --- |
-| localStorage enabled by default | Batch 05 | Yes |
-| Restart persistence behavior | Batch 05 | Remove the quiz's stored state |
-| Persistence scope | Batch 05 | Origin + normalized path + quiz ID |
-| Quiz-definition compatibility | Batch 05 | Store and verify a definition fingerprint |
 | Legacy `regexp` spelling | Batch 08 | Accept once with a deprecation warning |
 | Supported mathematical grammar | Batch 08 | Freeze from current documented examples before replacing math.js |
 
@@ -351,7 +407,8 @@ Resolve before or during the named batch:
 
 - Duplicate quiz identifiers are rejected within each document.
 - Invalid question JSON is rejected by Sphinx with a source-aware diagnostic.
-- Local persistence is a no-op.
+- Local progress survives reload in the same browser origin, normalized path,
+  and quiz ID when the schema and definition fingerprint remain compatible.
 - The runtime implements `regex`, while the prose-documented `regexp` spelling
   is ignored.
 - Unknown mathematical symbols use generic error text and leave the question
@@ -367,8 +424,9 @@ These are characterization statements, not desired final behavior.
 
 None.
 
-Recommended next action: execute Batch 05 in `D:\sphinx-yaq` to add optional,
-versioned, namespaced localStorage persistence without coupling it to rendering.
+Recommended next action: execute Batch 06 in `D:\sphinx-yaq` to remove the
+remaining legacy browser dependencies and unsafe string-built DOM paths while
+preserving grading, state, and persistence behavior.
 
 ## Batch checklist
 
@@ -377,7 +435,7 @@ versioned, namespaced localStorage persistence without coupling it to rendering.
 - [x] Batch 02 — Python parsing, validation, and safe output
 - [x] Batch 03 — JavaScript module extraction without behavior changes
 - [x] Batch 04 — Explicit runtime state and P0 behavior fixes
-- [ ] Batch 05 — localStorage-only persistence
+- [x] Batch 05 — localStorage-only persistence
 - [ ] Batch 06 — Legacy dependency removal and DOM security
 - [ ] Batch 07 — Accessibility and interaction
 - [ ] Batch 08 — Comparison robustness and determinism

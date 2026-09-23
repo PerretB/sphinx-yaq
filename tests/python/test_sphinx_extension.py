@@ -21,8 +21,9 @@ def test_html_build_emits_quiz_models_and_assets(app, warning):
     assert 'class="yaq"' in html
     assert 'class="yaq-q"' in html
     assert "sphinx_yaq/lib/watch.js" not in html
-    assert "sphinx_yaq/lib/js.cookie.js" in html
-    assert "sphinx_yaq/lib/fbconfig.js" in html
+    assert "firebase" not in html.lower()
+    assert "authentication" not in html.lower()
+    assert "js.cookie" not in html.lower()
     assert "sphinx_yaq/math.js" in html
     assert "sphinx_yaq/yaq.js" in html
     assert "sphinx_yaq/css/yaq.css" in html
@@ -46,6 +47,8 @@ def test_html_build_copies_extension_static_files(app):
     assert (static / "math.js").is_file()
     assert (static / "css" / "yaq.css").is_file()
     assert not (static / "lib" / "watch.js").exists()
+    assert not (static / "lib" / "js.cookie.js").exists()
+    assert not (static / "lib" / "fbconfig.js").exists()
 
 
 @pytest.mark.sphinx("html", testroot="basic")
