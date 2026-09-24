@@ -8,6 +8,7 @@
 
 .yaq-root{
 	width : 100%;
+	box-sizing: border-box;
 	border-style: solid;
     border-width: 1px;
 	margin-bottom: 10px;
@@ -18,8 +19,9 @@
 	font-size : 120%;
 	font-weight: 700;
 	color: white;
-	background-color : #6198c8;
+	background-color : #386d99;
 	width : 100%;
+	box-sizing: border-box;
 	padding : 5px 10px 5px 10px;
 	margin-bottom:10px;
 }
@@ -90,7 +92,7 @@
 	vertical-align: middle;
 	box-sizing: border-box;
 	color: white;
-	background-color : #6198c8;
+	background-color : #386d99;
 	border: 0;
 	font: inherit;
 }
@@ -101,6 +103,18 @@
 @keyframes yaq-blink{50%{opacity:0;}}
 
 .yaq-marker{margin: 0 10px; font-weight: 700;}
+.yaq-feedback-text{font-size: 0.85em;}
+.yaq-unanswered-marker{color: #554700;}
+.yaq-status{display: inline;}
+.yaq-root input[type="text"]{max-width: 100%;box-sizing: border-box;}
+.yaq-root select{max-width: 100%;}
+.yaq-root :is(button, input, select, summary):focus-visible,
+.yaq-spoiler-inline:focus-visible,
+.yaq-spoiler-block summary:focus-visible{
+  outline: 3px solid #162f62;
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce){.yaq-blink{animation: none;}}
 .yaq-visually-hidden{
   position: absolute;
   width: 1px;
@@ -115,7 +129,7 @@
 .yaq-wrong-marker{color: #9b0000;}
 .yaq-correct-marker{color: #006b00;}
 .yaq-solution-marker{color: #124e9b;}
-.yaq-warning-marker{font-size: 150%; cursor: help; color: #9b6500; margin: 0 10px;}
+.yaq-warning-marker{font-size: 100%; color: #705000; margin: 0 10px;}
 
 .yaq-button:after {
   content: " >";
@@ -168,7 +182,7 @@
 
 .yaq-switch3-button-active
 {
-  background-color : #6198c8;
+	background-color : #386d99;
   color : #FFF;
   font-weight: 700;
 }
@@ -235,6 +249,7 @@
 	font: inherit;
 	padding: 0;
 }
+.yaq-spoiler-inline:disabled{color: inherit;}
 
 
 
@@ -248,7 +263,7 @@
   vertical-align: middle;
   box-sizing: border-box;
   color: white;
-  background-color: #6198c8;
+  background-color: #386d99;
   cursor: pointer;
 }
 

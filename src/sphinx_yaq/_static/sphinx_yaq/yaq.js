@@ -407,8 +407,15 @@
       marker.title = label;
       const icon = createElement("span", null, symbol);
       icon.setAttribute("aria-hidden", "true");
-      marker.append(icon, createElement("span", "yaq-visually-hidden", label));
+      marker.append(icon, createElement("span", "yaq-feedback-text", " " + label));
       return marker;
+    }
+    function questionContext(element, index) {
+      var _a, _b;
+      const surrounding = (_a = element.parentElement) == null ? void 0 : _a.cloneNode(true);
+      surrounding == null ? void 0 : surrounding.querySelectorAll(".yaq-q, .yaq-spoiler-inline-hidden").forEach((node) => node.remove());
+      const prose = ((_b = surrounding == null ? void 0 : surrounding.textContent) == null ? void 0 : _b.replace(/\s+/g, " ").trim()) || "";
+      return "Question " + (index + 1) + (prose ? ": " + prose : "");
     }
     function setVisible(element, visible) {
       element.style.display = visible ? "" : "none";
@@ -569,6 +576,7 @@
           root.append(input);
           this.__warningMarker = createElement("span", "yaq-hidden yaq-warning-marker", "⚠");
           this.__warningMarker.dataset.role = "warningMarker";
+          this.__warningMarker.setAttribute("role", "alert");
           root.append(this.__warningMarker);
           this.__updateEnabled();
           this.__updateState();
@@ -635,6 +643,7 @@
                 this.__warningMarker.title = texts["wrongMathError"] + e.message;
               }
               this.__warningMarker.classList.remove("yaq-hidden");
+              this.__warningMarker.textContent = "⚠ " + this.__warningMarker.title;
               blink(q);
             }
           } else {
@@ -862,13 +871,15 @@
           "state": state
         };
       }
-      function QuestionContainer2(innerQuestionParams, rootElement, onChange) {
+      function QuestionContainer2(innerQuestionParams, rootElement, onChange, context) {
         this.model = getDefaultModel();
         this.rootDomElement = rootElement;
         this.__innerQuestion = void 0;
         this.__wrongMarker = void 0;
         this.__correctMarker = void 0;
         this.__infoMarker = void 0;
+        this.__unansweredMarker = void 0;
+        this.__gradedUnanswered = false;
         this.__onChange = onChange || function() {
         };
         this.__updateEnabled = function() {
@@ -881,21 +892,26 @@
             this.__wrongMarker.classList.add("yaq-hidden");
             this.__correctMarker.classList.add("yaq-hidden");
             this.__infoMarker.classList.add("yaq-hidden");
+            this.__unansweredMarker.classList.toggle("yaq-hidden", !this.__gradedUnanswered);
           } else if (this.model.state & QuestionState.correct) {
+            this.__unansweredMarker.classList.add("yaq-hidden");
             this.__wrongMarker.classList.add("yaq-hidden");
             this.__correctMarker.classList.remove("yaq-hidden");
             this.__infoMarker.classList.add("yaq-hidden");
           } else if (this.model.state & QuestionState.wrong) {
+            this.__unansweredMarker.classList.add("yaq-hidden");
             this.__wrongMarker.classList.remove("yaq-hidden");
             this.__correctMarker.classList.add("yaq-hidden");
             this.__infoMarker.classList.add("yaq-hidden");
           } else if (this.model.state & QuestionState.solved) {
+            this.__unansweredMarker.classList.add("yaq-hidden");
             this.__wrongMarker.classList.add("yaq-hidden");
             this.__correctMarker.classList.add("yaq-hidden");
             this.__infoMarker.classList.remove("yaq-hidden");
           }
         };
         this.__innerChanged = function() {
+          this.__gradedUnanswered = false;
           this.model.innerModel = this.__innerQuestion.getModel();
           this.__updateState();
           this.__onChange();
@@ -916,16 +932,29 @@
           this.__innerQuestion = new QuestionConstructor(innerQuestionParams2, this.__innerChanged.bind(this));
           this.model.innerModel = this.__innerQuestion.getModel();
           root.append(this.__innerQuestion.getRootElement());
+          const field = root.querySelector("input, select");
+          if (field) field.setAttribute("aria-label", context);
+          const switchGroup = root.querySelector(".yaq-switch3");
+          if (switchGroup) {
+            switchGroup.setAttribute("role", "group");
+            switchGroup.setAttribute("aria-label", context);
+            switchGroup.querySelectorAll("button").forEach((button, index) => {
+              button.setAttribute("aria-label", ["True", "Unanswered", "False"][index]);
+            });
+          }
           this.__wrongMarker = createFeedbackMarker("yaq-wrong-marker", "wrongMarker", "✘", "Incorrect");
           this.__correctMarker = createFeedbackMarker("yaq-correct-marker", "correctMarker", "✔", "Correct");
-          this.__infoMarker = createFeedbackMarker("yaq-solution-marker", "solutionMarker", "ⓘ", "Solution");
+          this.__infoMarker = createFeedbackMarker("yaq-solution-marker", "solutionMarker", "ⓘ", "Solution shown");
+          this.__unansweredMarker = createFeedbackMarker("yaq-unanswered-marker", "unansweredMarker", "?", "Unanswered");
           root.append(this.__wrongMarker);
           root.append(this.__correctMarker);
           root.append(this.__infoMarker);
+          root.append(this.__unansweredMarker);
           this.__updateEnabled();
           this.__updateState();
         };
         this.reset = function() {
+          this.__gradedUnanswered = false;
           this.__innerQuestion.reset();
           this.model.enabled = true;
           this.__updateState();
@@ -952,6 +981,8 @@
         };
         this.grade = function() {
           this.__innerQuestion.grade();
+          this.__gradedUnanswered = this.__innerQuestion.getModel().state === QuestionState.unsolved;
+          this.__updateState();
         };
         this.solve = function() {
           this.__innerQuestion.solve();
@@ -1021,11 +1052,13 @@
           var root = createElement("div", "yaq-activity");
           this.rootDomElement = root;
           root.append(...Array.from(sourceElement2.cloneNode(true).childNodes));
-          root.querySelectorAll(".yaq-q").forEach((elem, index) => {
+          const placeholders = Array.from(root.querySelectorAll(".yaq-q"));
+          const contexts = placeholders.map((elem, index) => questionContext(elem, index));
+          placeholders.forEach((elem, index) => {
             try {
               var textmodel = __b64DecodeUnicode(elem.getAttribute("data-model"));
               var model = JSON.parse(textmodel);
-              var question = new QuestionContainer(model, elem, this.__questionChanged.bind(this));
+              var question = new QuestionContainer(model, elem, this.__questionChanged.bind(this), contexts[index]);
               this.__questions.push(question);
               this.model["innerModel" + index] = question.getModel();
             } catch (error) {
@@ -1093,6 +1126,13 @@
         this.__buttonGrade = void 0;
         this.__buttonReset = void 0;
         this.__buttonSolve = void 0;
+        this.__status = void 0;
+        this.__statusText = void 0;
+        this.__announce = function(action) {
+          const states = this.__activity.__questions.map((question) => question.getModel().state);
+          const count = (state) => states.filter((value) => value === state).length;
+          this.__statusText.textContent = action + ": " + count(QuestionState.correct) + " correct, " + count(QuestionState.wrong) + " incorrect, " + count(QuestionState.unsolved) + " unanswered, " + count(QuestionState.solved) + " solution shown.";
+        };
         this.__updateEnabled = function() {
           [this.__buttonGrade, this.__buttonReset, this.__buttonSolve].forEach((button) => {
             button.disabled = !this.model.enabled;
@@ -1114,15 +1154,18 @@
         };
         this.grade = function() {
           this.__activity.grade();
+          this.__announce("Grading complete");
         };
         this.solve = function() {
           this.__activity.solve();
+          this.__announce("Solutions shown");
         };
         this.reset = function() {
           this.__activity.reset();
           this.model.enabled = true;
           this.__updateEnabled();
           self.storage.remove(this.__uid);
+          this.__announce("Quiz restarted");
         };
         this.__initEvent = function() {
           this.__buttonGrade.addEventListener("click", this.grade.bind(this));
@@ -1145,7 +1188,10 @@
         this.__initDomElement = function(sourceElement2) {
           var root = createElement("div", "yaq-root");
           this.rootDomElement = root;
-          root.append(createElement("div", "yaq-head", "Exercice " + (this.__exerciceNumber + 1) + " : " + this.__title));
+          const heading = createElement("h2", "yaq-head", "Exercice " + (this.__exerciceNumber + 1) + " : " + this.__title);
+          root.append(heading);
+          root.setAttribute("role", "region");
+          root.setAttribute("aria-label", heading.textContent);
           var mainContent = createElement("div", "yaq-main-content");
           root.append(mainContent);
           this.__activity = new QuizActivity(sourceElement2, this.__activityChanged.bind(this));
@@ -1164,6 +1210,12 @@
           this.__buttonReset = createElement("button", "yaq-button", texts["resetButtonText"]);
           this.__buttonReset.type = "button";
           footer.append(this.__buttonReset);
+          this.__status = createElement("div", "yaq-status");
+          this.__status.setAttribute("role", "status");
+          this.__status.setAttribute("aria-live", "polite");
+          this.__statusText = createElement("span", "yaq-visually-hidden");
+          this.__status.append(this.__statusText);
+          footer.append(this.__status);
           root.append(footer);
           this.__updateEnabled();
           this.__updateState();
@@ -2111,7 +2163,11 @@
   document.addEventListener("DOMContentLoaded", function() {
     yaq_app.init();
     document.querySelectorAll(".yaq-spoiler-inline-hidden").forEach((element) => {
-      element.addEventListener("click", () => element.classList.remove("yaq-spoiler-inline-hidden"));
+      element.addEventListener("click", () => {
+        element.classList.remove("yaq-spoiler-inline-hidden");
+        element.removeAttribute("aria-label");
+        element.disabled = true;
+      });
     });
     for (var i = 0; i < 26; i++) {
       var letter = String.fromCharCode(97 + i);

@@ -201,7 +201,7 @@ def spoiler_inline(
 
 
 def visit_spoiler_inline_node(self, node: SpoilerInline) -> None:
-    self.body.append('<button type="button" class="yaq-spoiler-inline yaq-spoiler-inline-hidden">')
+    self.body.append('<button type="button" aria-label="Show hidden text" class="yaq-spoiler-inline yaq-spoiler-inline-hidden">')
     self.body.append(html.escape(node["content"]))
 
 

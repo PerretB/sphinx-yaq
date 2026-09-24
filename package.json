@@ -11,6 +11,7 @@
     "check:js": "node scripts/build-js.mjs --check"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.63.0",
     "@vitest/coverage-v8": "^4.1.11",
     "esbuild": "^0.28.2",

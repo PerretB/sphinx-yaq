@@ -47,12 +47,13 @@ describe("YAQ runtime characterization", () => {
     for (const [role, symbol, label] of [
       ["wrongMarker", "✘", "Incorrect"],
       ["correctMarker", "✔", "Correct"],
-      ["solutionMarker", "ⓘ", "Solution"],
+      ["solutionMarker", "ⓘ", "Solution shown"],
+      ["unansweredMarker", "?", "Unanswered"],
     ]) {
       const marker = document.querySelector(`[data-role="${role}"]`);
       expect(marker.title).toBe(label);
       expect(marker.querySelector('[aria-hidden="true"]').textContent).toBe(symbol);
-      expect(marker.querySelector(".yaq-visually-hidden").textContent).toBe(label);
+      expect(marker.querySelector(".yaq-feedback-text").textContent.trim()).toBe(label);
     }
   });
 

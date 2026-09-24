@@ -61,6 +61,7 @@ def test_spoiler_role_and_directive_emit_current_html(app):
     assert '<details class="yaq-spoiler-block">' in html
     assert '<summary class="yaq-spoiler-block-title">Hint</summary>' in html
     assert 'class="yaq-spoiler-inline yaq-spoiler-inline-hidden"' in html
+    assert 'aria-label="Show hidden text"' in html
     assert 'onclick=' not in html
     assert 'use.fontawesome.com' not in html
     assert "hidden inline text" in html

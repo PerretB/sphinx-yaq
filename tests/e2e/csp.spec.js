@@ -21,6 +21,6 @@ test("quiz works under same-origin CSP and renders model strings as text", async
   await expect(page.locator('[data-role="correctMarker"]').first()).toBeVisible();
   await expect(page.locator('[data-role="correctMarker"]').last()).toBeVisible();
   await expect(page.locator('[data-role="correctMarker"] [aria-hidden="true"]').first()).toHaveText("✔");
-  await expect(page.locator('[data-role="correctMarker"] .yaq-visually-hidden').first()).toHaveText("Correct");
+  await expect(page.locator('[data-role="correctMarker"] .yaq-feedback-text').first()).toHaveText("Correct");
   expect(errors).toEqual([]);
 });

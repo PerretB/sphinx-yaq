@@ -18,7 +18,7 @@ export default defineConfig({
     browserName: "chromium",
     launchOptions: executablePath ? { executablePath } : {},
   },
-  webServer: {
+  webServer: process.env.YAQ_E2E_EXTERNAL_SERVER ? undefined : {
     command: "node tests/e2e/server.mjs",
     url: "http://127.0.0.1:4173/quiz/",
     reuseExistingServer: false,

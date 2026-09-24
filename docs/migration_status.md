@@ -5,7 +5,7 @@ Last updated: 2026-09-24
 ## Overall state
 
 The target repository `D:\sphinx-yaq` is initialized on `main` and tracks
-`origin/main`. Batches 00 through 05 are complete: the characterized legacy
+`origin/main`. Batches 00 through 07 are complete: the characterized legacy
 implementation is now available as an installable package with namespaced
 assets, reproducible distribution metadata, build-time model validation, safe
 serialization, directly tested JavaScript grading/state modules, and a
@@ -15,13 +15,17 @@ persistence with real-browser reload coverage. Batch 06 removed the remaining
 legacy browser dependencies and unsafe DOM construction, with escaping and
 same-origin CSP browser coverage.
 
+Batch 07 added labelled, keyboard-operable controls, visible textual question
+feedback, and live quiz status announcements while retaining the three-button
+true/false control and its layout.
+
 ## Current batch
 
-**Batch 07 — Accessibility and interaction**
+**Batch 08 — Comparison robustness**
 
-Status: ready to start.
+Status: ready to start. Batch 07 is complete.
 
-Batch specification: [`migration_batches/07-accessibility.md`](migration_batches/07-accessibility.md)
+Batch specification: [`migration_batches/08-comparison-robustness.md`](migration_batches/08-comparison-robustness.md)
 
 ## Completed work
 
@@ -127,6 +131,57 @@ Batch specification: [`migration_batches/07-accessibility.md`](migration_batches
   spoilers, math grading, and normal grading under same-origin scripts/styles.
 - Inventoried retained dependencies and licenses in
   [`dependency_inventory.md`](dependency_inventory.md).
+- Kept the existing true/false three-button switch, adding a named group,
+  full button names, pressed state, keyboard focus, and explicit selection.
+- Labelled text fields and selects from their numbered authored prose, added
+  visible Correct, Incorrect, Unanswered, and Solution shown feedback, and
+  announced grade, reveal, and restart summaries through a polite live region.
+- Made the inline spoiler's hidden action name explicit and its revealed state
+  inert, gave quizzes semantic headings and regions, and added visible focus
+  outlines, narrow-width bounds, reduced-motion handling, and improved blue
+  control contrast without changing the switch layout.
+- Added Playwright keyboard, role/name, status, axe, narrow-width, zoom, and
+  missing-image checks while retaining CSP and reload coverage.
+
+## Batch 07 decisions and validation
+
+- The three-button true/false switch remains the authored UX. It is exposed as
+  a labelled group of toggle buttons; no radio controls or visual redesign were
+  introduced.
+- A question's accessible name uses its ordinal and surrounding authored
+  sentence. This preserves authoring syntax and does not read answer definitions
+  from the quiz model.
+- The existing English feedback terms remain, now visible beside their symbols.
+  Quiz progress and persistence payloads are unchanged; transient "Unanswered"
+  feedback after grading is not stored.
+- Initial and graded quiz screenshots were inspected at a 900-pixel viewport.
+  The switch geometry and control arrangement remain intact. Automated checks
+  covered a 320-pixel viewport, 200% CSS zoom, reduced image availability,
+  keyboard operation, and axe scans before and after interactions. Manual
+  screen-reader speech, operating-system high-contrast mode, and browser-native
+  zoom remain useful follow-up checks on user devices.
+
+```text
+npm run build:js
+  passed; regenerated the packaged JavaScript bundle
+
+npm run test:js
+  stale-bundle check passed; 4 files and 71 tests passed
+
+python -m pytest (target .venv Python 3.12.14)
+  26 tests passed
+
+python -m sphinx -E -b html examples/demo/source examples/demo/build/html
+  passed with Sphinx 9.1.0
+
+npm run test:e2e (prestarted local demo server)
+  4 Chromium tests passed, including axe scans with no serious or critical
+  violations in the quiz UI
+```
+
+The Playwright runner's managed-server lifecycle still hangs in this Windows
+sandbox, so the tests used a prestarted local server. The only test-run warning
+was Node's `NO_COLOR`/`FORCE_COLOR` combination. No tests were skipped.
 
 ## Batch 06 decisions
 
