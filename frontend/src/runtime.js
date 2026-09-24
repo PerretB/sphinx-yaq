@@ -13,10 +13,6 @@ import { fingerprintQuizDefinition, QuizStorage } from "./storage.js";
 var yaq_app= (function(){
     var self = {};
 
-	var options = {
-		"base64Encode" : false
-	};
-	
 	var quizz = [];
 	var quizIdentifiers = new Set();
 	
@@ -40,16 +36,34 @@ var yaq_app= (function(){
 		return tryValue;
 	}
 	function blink(elem) {
-		elem.fadeOut(300).fadeIn(300);
+		elem.classList.remove("yaq-blink");
+		void elem.offsetWidth;
+		elem.classList.add("yaq-blink");
+	}
+
+	function createElement(tag, className, text) {
+		const element = document.createElement(tag);
+		if (className) element.className = className;
+		if (text !== undefined) element.textContent = text;
+		return element;
+	}
+
+	function createFeedbackMarker(className, role, symbol, label) {
+		const marker = createElement("span", "yaq-marker yaq-hidden " + className);
+		marker.dataset.role = role;
+		marker.title = label;
+		const icon = createElement("span", null, symbol);
+		icon.setAttribute("aria-hidden", "true");
+		marker.append(icon, createElement("span", "yaq-visually-hidden", label));
+		return marker;
+	}
+
+	function setVisible(element, visible) {
+		element.style.display = visible ? "" : "none";
 	}
 	
 	var questionConstructors = {};
 	
-	function arrayClear(array)
-	{
-		array.splice(0,array.length);
-	}
-
 	function isQuestionState(value) {
 		return value === QuestionStateEnum.unsolved ||
 			value === QuestionStateEnum.correct ||
@@ -72,7 +86,6 @@ var yaq_app= (function(){
 			return {
 				"enabled" : enabled,
 				"selectedIndex" : selectedIndex,
-				"selectedExtraStyles" : [],
 			};
 		}
 		
@@ -84,36 +97,25 @@ var yaq_app= (function(){
 			this.__values = [texts["True"], texts["dontKnow"], texts["False"]];
 			
 			this.__updateSelection= function(){
-				var extraStyles = this.model.selectedExtraStyles.join(" ")
-				var buttons = this.__buttons;
-				buttons.removeClass(extraStyles + " yaq-switch3-button-active yaq-switch3-button-notActive");
-				var model = this.model;
-				buttons.each(function(index, elem){
-					if(index === model.selectedIndex)
-					{
-						$(elem).addClass("yaq-switch3-button-active " + extraStyles);
-					}else{
-						$(elem).addClass("yaq-switch3-button-notActive");
-					}
+				this.__buttons.forEach((button, index) => {
+					const selected = index === this.model.selectedIndex;
+					button.classList.toggle("yaq-switch3-button-active", selected);
+					button.classList.toggle("yaq-switch3-button-notActive", !selected);
+					button.classList.toggle("yaq-switch3-button-disabled", selected && !this.model.enabled);
+					button.setAttribute("aria-pressed", String(selected));
 				});
 			}
 			
 			
 			this.__updateEnabled = function(){
-				arrayClear(this.model.selectedExtraStyles);
-				this.__buttons.removeClass("yaq-switch3-button-disabled");
-				if(this.model.enabled)
-				{
-					this.__buttons.addClass("yaq-interractiveElement");
-				} else {
-					this.model.selectedExtraStyles.push("yaq-switch3-button-disabled");
-					this.__buttons.removeClass("yaq-interractiveElement");
-				}
+				this.__buttons.forEach(button => {
+					button.disabled = !this.model.enabled;
+					button.classList.toggle("yaq-interractiveElement", this.model.enabled);
+				});
 			}
 		
 			this.reset = function(){
 				this.model.enabled=true;
-				arrayClear(this.model.selectedExtraStyles);
 				this.model.selectedIndex = 1;
 				this.render();
 			};
@@ -135,41 +137,34 @@ var yaq_app= (function(){
 		
 			this.__initEvents = function(){
 				
-				this.__buttons.click((function(e){
+				this.__buttons.forEach(button => button.addEventListener("click", (e) => {
 					if(this.model.enabled)
 					{
-						var newIndex = + $(e.target).attr("data-index");
+						var newIndex = Number(e.currentTarget.dataset.index);
 						if(newIndex !== this.model.selectedIndex) {
 							this.model.selectedIndex = newIndex;
 							this.render();
 							this.__onChange();
 						}
 					}
-				}).bind(this));
+				}));
 			}
 			
-			this.__updateExtraStyles = function(oldExtraStyles){
-				if(oldExtraStyles)
-				{
-					var oldExtraStyles = oldExtraStyles.join(" ");
-					this.__buttons.removeClass(oldExtraStyles);
-				}
-				this.__updateSelection();
-			}
-		
 			this.__initDomElement = function(){
-				var root = $('<div class="yaq-switch3"></div>');
+				var root = createElement("div", "yaq-switch3");
 				this.rootDomElement = root;
 				
-				var container = $('<div class="yaq-switch3-buttons"></div>');
+				var container = createElement("div", "yaq-switch3-buttons");
 				
 				for(var i=0; i<3; i++)
 				{
-					var button = $('<a class="yaq-switch3-button" data-index="' + i + '">' + this.__values[i] + '</a>');
+					var button = createElement("button", "yaq-switch3-button", this.__values[i]);
+					button.type = "button";
+					button.dataset.index = String(i);
 					container.append(button);
 				}
 				
-				this.__buttons = container.children();
+				this.__buttons = Array.from(container.children);
 				root.append(container);
 				this.__updateSelection();
 				this.__updateEnabled();
@@ -216,7 +211,6 @@ var yaq_app= (function(){
 		
 			
 			this.model = getDefaultModel();
-			this.__explanation = getDefault(params["explanation"], "");
 			this.__flags = getDefault(params["flags"], "");
 			this.__answer = getDefault(params["answer"], "");
 			this.__size = getDefault(params["size"], 0);
@@ -229,17 +223,17 @@ var yaq_app= (function(){
 			this.__onChange = onChange || function() {};
 			
 			this.__updateEnabled = function(){
-				this.__input.prop('disabled', !this.model.enabled);
+				this.__input.disabled = !this.model.enabled;
 			};
 			
 			this.__updateState = function(){
-				this.__warningMarker.addClass('yaq-hidden');
+				this.__warningMarker.classList.add('yaq-hidden');
 			};
 			
 			this.__updateValue = function(){
 				 
-				 if(this.__input.val()!==this.model.value){
-					this.__input.val(this.model.value);
+				 if(this.__input.value!==this.model.value){
+					this.__input.value = this.model.value;
 				 }
 					
 			};
@@ -250,38 +244,40 @@ var yaq_app= (function(){
 			};
 			
 			this.__initDomElement = function(){
-				var root = $('<span class="yaq-FBQuestion"></span>');
+				var root = createElement("span", "yaq-FBQuestion");
 				this.rootDomElement = root;
 				
-				var input= $('<input type="text">');
+				var input = createElement("input");
+				input.type = "text";
 				this.__input = input;
 				
 				if(this.__size !== 0)
 				{
-					input.attr("size",this.__size)
+					input.size = this.__size;
 				}
 				else if(!this.__answser)
 				{
 					var l = this.__answer.length;
-					input.attr('size',Math.max(30,l+Math.round(l*0.2)));
+						input.size = Math.max(30,l+Math.round(l*0.2));
 				}
 				
 				this.__flags.split(',').forEach(function(elem){
 					if(elem)
-						input.attr("data-" + elem.trim(),'');
+						input.setAttribute("data-" + elem.trim(), "");
 				});
 				
-				input.on('input', (function() {
-					this.model.value = this.__input.val();
+				input.addEventListener('input', () => {
+					this.model.value = this.__input.value;
 					this.model = answerChanged(this.model);
-					this.__warningMarker.addClass('yaq-hidden');
+					this.__warningMarker.classList.add('yaq-hidden');
 					this.render();
 					this.__onChange();
-				}).bind(this));
+				});
 				
 				root.append(input);
 
-				this.__warningMarker = $("<span class='yaq-hidden' style='font-size:150%;cursor:help;color:orange; margin-right:10px;margin-left:10px;' data-role='warningMarker' title='This is my tooltip'>⚠</span>");
+				this.__warningMarker = createElement("span", "yaq-hidden yaq-warning-marker", "⚠");
+				this.__warningMarker.dataset.role = "warningMarker";
 				root.append(this.__warningMarker);
 
 				this.__updateEnabled();
@@ -290,7 +286,7 @@ var yaq_app= (function(){
 			
 			this.reset = function(){
 				this.model = resetAnswer({ ...this.model, value: "" });
-				this.__warningMarker.addClass('yaq-hidden');
+				this.__warningMarker.classList.add('yaq-hidden');
 				this.render();
 				this.__onChange();
 			};
@@ -315,12 +311,12 @@ var yaq_app= (function(){
 				var gans = this.model.value;
 				if(gans)
 				{
-					var mathEq = q.is('[data-math]');
-					var fuzzy = q.is('[data-fuzzy]');
-					var sequence = q.is('[data-sequence]');
-					var nospace = q.is('[data-nospace]');
-					var regex = q.is('[data-regex]');
-					var ordered = q.is('[data-ordered]');
+					var mathEq = q.hasAttribute('data-math');
+					var fuzzy = q.hasAttribute('data-fuzzy');
+					var sequence = q.hasAttribute('data-sequence');
+					var nospace = q.hasAttribute('data-nospace');
+					var regex = q.hasAttribute('data-regex');
+					var ordered = q.hasAttribute('data-ordered');
 					var ans = this.__answer;
 					try{
 						if(testAnswer(ans, gans, {
@@ -346,13 +342,13 @@ var yaq_app= (function(){
 						}
 					} catch (e){
 						if (e instanceof MathVariableError) {
-							this.__warningMarker[0].title = texts['wrongMathVariableError'] + Object.keys(this.__math_vars).map( function(key){ return key }).join(", ");
+							this.__warningMarker.title = texts['wrongMathVariableError'] + Object.keys(this.__math_vars).join(", ");
 						} else if (e instanceof SyntaxError){
-							this.__warningMarker[0].title = texts['wrongMathSyntaxError'] + " " + e.message;
+							this.__warningMarker.title = texts['wrongMathSyntaxError'] + " " + e.message;
 						} else {
-							this.__warningMarker[0].title = texts['wrongMathError'] + e.message;
+							this.__warningMarker.title = texts['wrongMathError'] + e.message;
 						}
-						this.__warningMarker.removeClass('yaq-hidden');
+						this.__warningMarker.classList.remove('yaq-hidden');
 						blink(q);
 					}
 				}else{
@@ -409,7 +405,6 @@ var yaq_app= (function(){
 		
 
 			this.model = getDefaultModel();
-			this.__explanation = getDefault(params["explanation"], "");
 			this.__values = getDefault(params["values"], "");
 			this.__answer = getDefault(params["answer"], "");
 			
@@ -418,7 +413,7 @@ var yaq_app= (function(){
 			this.__onChange = onChange || function() {};
 			
 			this.__updateEnabled = function(){
-				this.__input.prop('disabled', !this.model.enabled);
+				this.__input.disabled = !this.model.enabled;
 			};
 			
 			this.__updateState = function(){
@@ -426,9 +421,9 @@ var yaq_app= (function(){
 			};
 			
 			this.__updateSelectedElement = function(){
-				if(this.model.selectedValue != this.__input.find(":selected").text())
+				if(this.model.selectedValue !== this.__input.value)
 				{
-					this.__input.val(this.model.selectedValue);
+					this.__input.value = this.model.selectedValue;
 				}
 				
 			}
@@ -439,25 +434,29 @@ var yaq_app= (function(){
 				this.__updateSelectedElement();
 			};
 			this.__initDomElement = function(){
-				var root = $('<span class="yaq-FBQuestion"></span>');
+				var root = createElement("span", "yaq-FBQuestion");
 				this.rootDomElement = root;
 				
-				var input= $('<select></select>');
+				var input = createElement("select");
 				this.__input = input;
-				input.append($('<option value=""></option>'));
+				const emptyOption = createElement("option");
+				emptyOption.value = "";
+				input.append(emptyOption);
 				this.__values.split(",").forEach(function(elem){
 					elem = elem.trim();
-					input.append($('<option value="' + elem + '">' + elem + '</option>'));
+					const option = createElement("option", null, elem);
+					option.value = elem;
+					input.append(option);
 				}
 				);
 
 				
-				input.on('change', (function() {
-					this.model.selectedValue = this.__input.find(":selected").text();
+				input.addEventListener('change', () => {
+					this.model.selectedValue = this.__input.value;
 					this.model = answerChanged(this.model);
 					this.render();
 					this.__onChange();
-				}).bind(this));
+				});
 				
 				root.append(input);
 							
@@ -546,7 +545,6 @@ var yaq_app= (function(){
 		
 		function TFQuestion(params, onChange){
 			this.model = getDefaultModel();
-			this.__explanation = getDefault(params["explanation"], "");
 			this.__answer = getDefault(params["answer"], "");
 			this.rootDomElement = undefined;
 			this.__switch3 = undefined;
@@ -565,7 +563,7 @@ var yaq_app= (function(){
 			};
 			
 			this.__initDomElement = function(){
-				var root = $('<span class="yaq-TFQuestion"></span>');
+				var root = createElement("span", "yaq-TFQuestion");
 				this.rootDomElement = root;
 				this.__switch3 = new Switch3(undefined, (function(){
 					this.model = answerChanged(this.model);
@@ -672,7 +670,6 @@ var yaq_app= (function(){
 			this.model = getDefaultModel();
 			this.rootDomElement = rootElement;
 
-			this.__uid=Math.random();
 			this.__innerQuestion = undefined;
 			this.__wrongMarker = undefined;
 			this.__correctMarker = undefined;
@@ -687,21 +684,21 @@ var yaq_app= (function(){
 			this.__updateState = function(){
 				this.model.state = this.__innerQuestion.getModel().state;
 				if(this.model.state == QuestionStateEnum.unsolved){
-					this.__wrongMarker.addClass('yaq-hidden');
-					this.__correctMarker.addClass('yaq-hidden');
-					this.__infoMarker.addClass('yaq-hidden');
+					this.__wrongMarker.classList.add('yaq-hidden');
+					this.__correctMarker.classList.add('yaq-hidden');
+					this.__infoMarker.classList.add('yaq-hidden');
 				} else if (this.model.state & QuestionStateEnum.correct){
-					this.__wrongMarker.addClass('yaq-hidden');
-					this.__correctMarker.removeClass('yaq-hidden');
-					this.__infoMarker.addClass('yaq-hidden');
+					this.__wrongMarker.classList.add('yaq-hidden');
+					this.__correctMarker.classList.remove('yaq-hidden');
+					this.__infoMarker.classList.add('yaq-hidden');
 				}else if (this.model.state & QuestionStateEnum.wrong){
-					this.__wrongMarker.removeClass('yaq-hidden');
-					this.__correctMarker.addClass('yaq-hidden');
-					this.__infoMarker.addClass('yaq-hidden');
+					this.__wrongMarker.classList.remove('yaq-hidden');
+					this.__correctMarker.classList.add('yaq-hidden');
+					this.__infoMarker.classList.add('yaq-hidden');
 				} else if (this.model.state &  QuestionStateEnum.solved){
-					this.__wrongMarker.addClass('yaq-hidden');
-					this.__correctMarker.addClass('yaq-hidden');
-					this.__infoMarker.removeClass('yaq-hidden');
+					this.__wrongMarker.classList.add('yaq-hidden');
+					this.__correctMarker.classList.add('yaq-hidden');
+					this.__infoMarker.classList.remove('yaq-hidden');
 				}
 			};
 
@@ -715,12 +712,12 @@ var yaq_app= (function(){
 				var root ;
 				if(!this.rootDomElement)
 				{
-					root = $('<span class="yaq-Question"></span>');
+					root = createElement("span", "yaq-Question");
 					this.rootDomElement = root;
 				} else{
 					root = this.rootDomElement;
-					root.removeClass("yaq-q");
-					root.addClass("yaq-Question");
+					root.classList.remove("yaq-q");
+					root.classList.add("yaq-Question");
 				}
 				
 				
@@ -733,9 +730,9 @@ var yaq_app= (function(){
 				this.model.innerModel = this.__innerQuestion.getModel();
 				root.append(this.__innerQuestion.getRootElement());
 					
-				this.__wrongMarker = $("<i class='fa fa-thumbs-down yaq-hidden' style='color:red; margin-right:10px;margin-left:10px;' data-role='wrongMarker'></i>");
-				this.__correctMarker = $("<i class='fa fa-thumbs-up yaq-hidden' style='color:green; margin-right:10px;margin-left:10px;' data-role='correctMarker'></i>");
-				this.__infoMarker = $("<i class='fa fa-info-circle yaq-hidden' style='color:blue; margin-right:10px;margin-left:10px;'  data-role='solutionMarker'></i>");	
+				this.__wrongMarker = createFeedbackMarker("yaq-wrong-marker", "wrongMarker", "✘", "Incorrect");
+				this.__correctMarker = createFeedbackMarker("yaq-correct-marker", "correctMarker", "✔", "Correct");
+				this.__infoMarker = createFeedbackMarker("yaq-solution-marker", "solutionMarker", "ⓘ", "Solution");
 				root.append(this.__wrongMarker);
 				root.append(this.__correctMarker);
 				root.append(this.__infoMarker);	
@@ -813,7 +810,7 @@ var yaq_app= (function(){
 				};
 			}
 
-		function QuizActivity(innerHTML, onChange){
+		function QuizActivity(sourceElement, onChange){
 			this.model = getDefaultModel();
 			this.rootDomElement = undefined;
 			this.__questions = [];
@@ -867,24 +864,24 @@ var yaq_app= (function(){
 				this.model.enabled=true;
 			};
 			
-			this.__initDomElement = function(innerHTML){
-				var root = $('<div class="yaq-activity"></div>');
+			this.__initDomElement = function(sourceElement){
+				var root = createElement("div", "yaq-activity");
 				this.rootDomElement = root;
-				root.html(innerHTML);
-				root.find('.yaq-q').each((function(index,elem){
-					elem = $(elem);
+				root.append(...Array.from(sourceElement.cloneNode(true).childNodes));
+				root.querySelectorAll('.yaq-q').forEach((elem, index) => {
 					try {
-						var textmodel = __b64DecodeUnicode(elem.attr('data-model'));
+						var textmodel = __b64DecodeUnicode(elem.getAttribute('data-model'));
 						var model = JSON.parse(textmodel);
 						var question = new QuestionContainer(model, elem, this.__questionChanged.bind(this));
 						this.__questions.push(question);
 						this.model['innerModel' + index] = question.getModel();
 					} catch (error) {
 						console.error("YAQ: Error while initializing question.", error);
-						elem.removeClass("yaq-q yaq-Question").addClass("yaq-question-fallback");
-						elem.append($("<span></span>").text(" Interactive question unavailable."));
+						elem.classList.remove("yaq-q", "yaq-Question");
+						elem.classList.add("yaq-question-fallback");
+						elem.append(createElement("span", null, " Interactive question unavailable."));
 					}
-				}).bind(this));
+				});
 				
 				this.__updateState();
 				this.__updateEnabled();
@@ -892,7 +889,7 @@ var yaq_app= (function(){
 			
 	
 			
-			this.__initDomElement(innerHTML);
+			this.__initDomElement(sourceElement);
 			
 
 				this.getModel = function(){return this.model;};
@@ -947,7 +944,7 @@ var yaq_app= (function(){
 				};
 			}
 
-		function Quiz(innerHTML,params,fingerprint){
+		function Quiz(sourceElement,params,fingerprint){
 
 			
 			this.model = getDefaultModel();
@@ -968,44 +965,20 @@ var yaq_app= (function(){
 
 			this.__updateEnabled = function()
 			{
-				if(this.model.enabled)
-				{
-					this.__buttonGrade.addClass("yaq-interractiveElement");
-					this.__buttonReset.addClass("yaq-interractiveElement");
-					this.__buttonSolve.addClass("yaq-interractiveElement");
-				} else {
-					this.__buttonGrade.removeClass("yaq-interractiveElement");
-					this.__buttonReset.removeClass("yaq-interractiveElement");
-					this.__buttonSolve.removeClass("yaq-interractiveElement");
-				}
+				[this.__buttonGrade, this.__buttonReset, this.__buttonSolve].forEach(button => {
+					button.disabled = !this.model.enabled;
+					button.classList.toggle("yaq-interractiveElement", this.model.enabled);
+				});
 				
 				this.__activity.setEnabled(this.model.enabled);
 			};
 					
 			this.__updateState = function()
 			{
-				var flagEnd=false;
-				if(this.model.state & ActivityStateEnum.ended)
-				{
-					flagEnd = true;
-					this.__buttonReset.show();
-				}else{
-					this.__buttonReset.hide();
-				}
-				
-				if(!flagEnd && this.model.state & ActivityStateEnum.ongoing)
-				{
-					this.__buttonGrade.show();
-				}else{
-					this.__buttonGrade.hide();
-				}
-				
-				if(!flagEnd && this.model.state & ActivityStateEnum.solvable)
-				{
-					this.__buttonSolve.show();
-				}else{
-					this.__buttonSolve.hide();
-				}	
+				var flagEnd = Boolean(this.model.state & ActivityStateEnum.ended);
+				setVisible(this.__buttonReset, flagEnd);
+				setVisible(this.__buttonGrade, !flagEnd && Boolean(this.model.state & ActivityStateEnum.ongoing));
+				setVisible(this.__buttonSolve, !flagEnd && Boolean(this.model.state & ActivityStateEnum.solvable));
 			};
 
 			this.__activityChanged = function(){
@@ -1031,9 +1004,9 @@ var yaq_app= (function(){
 			};
 			
 			this.__initEvent = function(){
-				this.__buttonGrade.click(this.grade.bind(this));
-				this.__buttonSolve.click(this.solve.bind(this));
-				this.__buttonReset.click(this.reset.bind(this));
+				this.__buttonGrade.addEventListener("click", this.grade.bind(this));
+				this.__buttonSolve.addEventListener("click", this.solve.bind(this));
+				this.__buttonReset.addEventListener("click", this.reset.bind(this));
 			};
 			
 			this.__updateModel = function(){
@@ -1054,31 +1027,34 @@ var yaq_app= (function(){
 			
 			
 			
-			this.__initDomElement = function(innerHTML){
+			this.__initDomElement = function(sourceElement){
 				
-				var root = $("<div class='yaq-root'></div>");
+				var root = createElement("div", "yaq-root");
 				this.rootDomElement = root;
-				root.append("<div class='yaq-head'>Exercice " + (this.__exerciceNumber + 1) + " : " + this.__title  + "</div>");
+				root.append(createElement("div", "yaq-head", "Exercice " + (this.__exerciceNumber + 1) + " : " + this.__title));
 				
-				var mainContent = $("<div class='yaq-main-content'></div>");
+				var mainContent = createElement("div", "yaq-main-content");
 				root.append(mainContent);
 				
-				this.__activity = new QuizActivity(innerHTML, this.__activityChanged.bind(this));
+				this.__activity = new QuizActivity(sourceElement, this.__activityChanged.bind(this));
 				this.model.innerModel = this.__activity.getModel();
 				mainContent.append(this.__activity.getRootElement());
 				this.model.state = this.__activity.getModel().state;
 				
 				
-				var footer=$('<div class="yaq-footer"></div>');
+				var footer = createElement("div", "yaq-footer");
 				
 				if(this.__activity.getNumberOfQuestions()===0)
-					footer.addClass("yaq-hidden");
+					footer.classList.add("yaq-hidden");
 				
-				this.__buttonGrade = $('<span class="yaq-button">' + texts["gradeButtonText"] + '</span>');
+				this.__buttonGrade = createElement("button", "yaq-button", texts["gradeButtonText"]);
+				this.__buttonGrade.type = "button";
 				footer.append(this.__buttonGrade);
-				this.__buttonSolve = $('<span class="yaq-button">' + texts["solveButtonText"] + '</span>');
+				this.__buttonSolve = createElement("button", "yaq-button", texts["solveButtonText"]);
+				this.__buttonSolve.type = "button";
 				footer.append(this.__buttonSolve);
-				this.__buttonReset = $('<span class="yaq-button">' + texts["resetButtonText"] + '</span>');
+				this.__buttonReset = createElement("button", "yaq-button", texts["resetButtonText"]);
+				this.__buttonReset.type = "button";
 				footer.append(this.__buttonReset);
 				
 				
@@ -1090,7 +1066,7 @@ var yaq_app= (function(){
 				this.__initEvent();
 			};
 			
-			this.__initDomElement(innerHTML);
+			this.__initDomElement(sourceElement);
 			
 			this.getModel = (function(){return this.model;}).bind(this);
 			this.getRootElement = (function(){return this.rootDomElement;}).bind(this);
@@ -1211,19 +1187,17 @@ var yaq_app= (function(){
 	*******************************/
 	
 
-	function initFromObj(jqElement, index, innerHTML, model)
+	function initFromObj(element, index, model)
 	{
 		model.exerciceNumber = index;
-		var definitions = jqElement.find(".yaq-q").map(function(_index, element){
-			return $(element).attr("data-model");
-		}).get();
+		var definitions = Array.from(element.querySelectorAll(".yaq-q"), question => question.getAttribute("data-model"));
 		var fingerprint = fingerprintQuizDefinition(definitions);
-		var quiz = new Quiz(innerHTML, model, fingerprint);
+		var quiz = new Quiz(element, model, fingerprint);
 		var storedState = self.storage.load(quiz.__uid, fingerprint);
 		if(storedState && !quiz.restore(storedState)) self.storage.remove(quiz.__uid);
 		quizz.push(quiz);
 		quizIdentifiers.add(quiz.__uid);
-		jqElement.empty().append(quiz.getRootElement());
+		element.replaceChildren(quiz.getRootElement());
 		
 	}
 	
@@ -1238,29 +1212,28 @@ var yaq_app= (function(){
 		}
 		initialized=true;	
 		self.storage = new QuizStorage({ globalObject: window });
-        $(".yaq").each(function(index){
-			var element = $(this);
-			var innerHTML = element.html();
-			var model = element.attr('data-model');
+		document.querySelectorAll(".yaq").forEach((element, index) => {
+			var model = element.getAttribute('data-model');
 			try {
 				if(model)
 				{
 					model = JSON.parse(model);
-					initFromObj(element, index, innerHTML, model);
+					initFromObj(element, index, model);
 				}
 				else throw new Error("Empty model in YAQ quiz");
 				
 			}
 			catch (error) {
 			   console.error("YAQ: Error while initializing quiz.", error);
-			   element.addClass("yaq-quiz-fallback");
-			   element.append($("<p></p>").text("Interactive quiz unavailable."));
+			   element.classList.add("yaq-quiz-fallback");
+			   element.append(createElement("p", null, "Interactive quiz unavailable."));
 			}
 			
-		}).show();
-		$(window).on( "unload",(function() {
+			element.classList.add("yaq-active");
+		});
+		window.addEventListener("pagehide", () => {
 			self.storage.flush();
-			}).bind(this));
+		});
     };
 
 	
@@ -1272,6 +1245,9 @@ globalThis.yaq_app = yaq_app;
 
 document.addEventListener("DOMContentLoaded", function() {
     yaq_app.init();
+	document.querySelectorAll(".yaq-spoiler-inline-hidden").forEach(element => {
+		element.addEventListener("click", () => element.classList.remove("yaq-spoiler-inline-hidden"));
+	});
 	// Remove single letter units from maths.js... hugly hack
 	for(var i=0; i < 26; i++){
 		var letter = String.fromCharCode(97 + i);

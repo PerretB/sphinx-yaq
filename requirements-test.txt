@@ -1,6 +1,5 @@
 pytest>=8
 pytest-cov>=5
 Sphinx>=7
-sphinx-rtd-theme>=2
 build>=1.2
 -e .

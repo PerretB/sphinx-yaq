@@ -19,3 +19,8 @@ All notable changes to this project will be documented in this file.
 - Remove Firebase, authentication, cloud synchronization, cookies, and their
   assets; persist minimal quiz progress only in resilient, versioned,
   document-scoped `localStorage` with definition compatibility checks.
+- Remove both jQuery bundles and the Font Awesome request, replace string-built
+  quiz controls with standard DOM APIs and compact Unicode feedback symbols
+  with accessible labels, and make inline
+  spoilers native buttons without inline handlers. The demo now uses Alabaster
+  to avoid theme-provided jQuery and icon assets.

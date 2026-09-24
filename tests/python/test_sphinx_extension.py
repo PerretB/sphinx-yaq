@@ -46,6 +46,8 @@ def test_html_build_copies_extension_static_files(app):
     assert (static / "yaq.js").is_file()
     assert (static / "math.js").is_file()
     assert (static / "css" / "yaq.css").is_file()
+    assert not (static / "jquery.js").exists()
+    assert not (static / "lib" / "jquery-3.2.1.min.js").exists()
     assert not (static / "lib" / "watch.js").exists()
     assert not (static / "lib" / "js.cookie.js").exists()
     assert not (static / "lib" / "fbconfig.js").exists()
@@ -58,7 +60,9 @@ def test_spoiler_role_and_directive_emit_current_html(app):
     html = (Path(app.outdir) / "index.html").read_text(encoding="utf-8")
     assert '<details class="yaq-spoiler-block">' in html
     assert '<summary class="yaq-spoiler-block-title">Hint</summary>' in html
-    assert 'class="yaq-spoiler-inline-hidden"' in html
+    assert 'class="yaq-spoiler-inline yaq-spoiler-inline-hidden"' in html
+    assert 'onclick=' not in html
+    assert 'use.fontawesome.com' not in html
     assert "hidden inline text" in html
 
 
@@ -120,7 +124,7 @@ def test_all_documented_question_forms_and_spoilers_build(app, warning):
         {"type": "SC", "values": "A,B,C,D,E", "answer": "D"},
     ]
     assert '<details class="yaq-spoiler-block">' in html
-    assert 'class="yaq-spoiler-inline-hidden"' in html
+    assert 'class="yaq-spoiler-inline yaq-spoiler-inline-hidden"' in html
 
 
 @pytest.mark.sphinx("html", testroot="special-characters")

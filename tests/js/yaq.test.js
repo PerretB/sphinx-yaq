@@ -42,6 +42,20 @@ function buttonWithin(element, label) {
 }
 
 describe("YAQ runtime characterization", () => {
+  it("uses compact Unicode feedback symbols with accessible text", async () => {
+    const { document } = await loadQuestions([{ type: "FB", answer: "Yalta" }]);
+    for (const [role, symbol, label] of [
+      ["wrongMarker", "✘", "Incorrect"],
+      ["correctMarker", "✔", "Correct"],
+      ["solutionMarker", "ⓘ", "Solution"],
+    ]) {
+      const marker = document.querySelector(`[data-role="${role}"]`);
+      expect(marker.title).toBe(label);
+      expect(marker.querySelector('[aria-hidden="true"]').textContent).toBe(symbol);
+      expect(marker.querySelector(".yaq-visually-hidden").textContent).toBe(label);
+    }
+  });
+
   it("replaces placeholders with a titled quiz and the three footer actions", async () => {
     const { document, jsdomErrors } = await loadQuestions([
       { type: "FB", answer: "Yalta" },
@@ -59,12 +73,10 @@ describe("YAQ runtime characterization", () => {
   });
 
   it("renders Python-escaped titles and choice labels as text", async () => {
-    const escaped = "&lt;script&gt;alert(1)&lt;/script&gt;";
+    const escaped = "<script>alert(1)</script>";
     const { document, jsdomErrors } = await loadQuestions(
       [{ type: "SC", values: `safe,${escaped}`, answer: "safe" }],
-      // The HTML translator escapes the ampersands once more in the data
-      // attribute; the browser removes that outer layer before JSON parsing.
-      { title: escaped.replaceAll("&", "&amp;") },
+      { title: escaped },
     );
 
     expect(document.querySelector(".yaq-head").textContent).toContain(

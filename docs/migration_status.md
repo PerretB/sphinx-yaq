@@ -1,6 +1,6 @@
 # YAQ migration status
 
-Last updated: 2026-09-23
+Last updated: 2026-09-24
 
 ## Overall state
 
@@ -11,15 +11,17 @@ assets, reproducible distribution metadata, build-time model validation, safe
 serialization, directly tested JavaScript grading/state modules, and a
 reproducible browser bundle. Batch 05 removed all Firebase, authentication,
 cloud synchronization, and cookie paths and added resilient local-only
-persistence with real-browser reload coverage.
+persistence with real-browser reload coverage. Batch 06 removed the remaining
+legacy browser dependencies and unsafe DOM construction, with escaping and
+same-origin CSP browser coverage.
 
 ## Current batch
 
-**Batch 06 — Legacy dependency removal and DOM security**
+**Batch 07 — Accessibility and interaction**
 
 Status: ready to start.
 
-Batch specification: [`migration_batches/06-dependency-security.md`](migration_batches/06-dependency-security.md)
+Batch specification: [`migration_batches/07-accessibility.md`](migration_batches/07-accessibility.md)
 
 ## Completed work
 
@@ -113,6 +115,32 @@ Batch specification: [`migration_batches/06-dependency-security.md`](migration_b
   revealed, and unanswered progress, and made Restart delete its quiz record.
 - Added storage unit tests, jsdom restoration and restart tests, and a
   Playwright test that restores progress after reloading generated demo HTML.
+- Replaced jQuery selection, events, classes, animation, and HTML-string UI
+  construction with standard DOM APIs, native buttons, and local Unicode
+  feedback symbols with visually hidden labels.
+- Preserved Sphinx-rendered nested prose by cloning existing DOM nodes before
+  activating a quiz; failed activation still leaves original prose readable.
+- Removed both bundled jQuery copies, the remote Font Awesome stylesheet, and
+  the inline spoiler handler. The demonstration now uses Alabaster so its
+  generated pages do not pull in the old theme's jQuery or icon assets.
+- Added injection and CSP browser coverage for titles, choices, nested prose,
+  spoilers, math grading, and normal grading under same-origin scripts/styles.
+- Inventoried retained dependencies and licenses in
+  [`dependency_inventory.md`](dependency_inventory.md).
+
+## Batch 06 decisions
+
+- Quiz titles, choice labels, and displayed answers are inserted as DOM text or
+  control values. Authored nested Sphinx markup is copied as existing DOM,
+  without reparsing an HTML string.
+- Feedback markers use compact local Unicode symbols (✘, ✔, ⓘ), with hidden
+  text and hover labels for their meaning. Spoiler roles render native buttons
+  with event listeners, keeping the click-to-reveal interaction under CSP.
+- math.js 10.6.4 remains for Batch 08 grammar work. Its dormant global-object
+  fallbacks contain `Function` expressions, but the CSP browser test confirms
+  math grading works without `unsafe-eval` for the covered expression.
+- The demo uses Alabaster to keep its built pages free of jQuery and Font
+  Awesome. This changes the demo theme only, not quiz authoring syntax.
 
 ## Batch 05 persistence decisions
 
@@ -299,6 +327,39 @@ Playwright run reported only Node's harmless `NO_COLOR`/`FORCE_COLOR` warning,
 with no browser-console errors. No tests were skipped and no Sphinx warnings
 were reported.
 
+## Target Batch 06 validation
+
+```text
+npm run build:js
+  generated the packaged classic-script bundle
+
+npm run test:js
+  stale-bundle check passed; 4 test files and 71 tests passed
+
+python -m pytest
+  26 tests passed
+
+python -m sphinx -E -b html examples/demo/source examples/demo/build/html
+  passed with Sphinx 9.1.0 and Alabaster
+
+python -m build
+  built sphinx_yaq-0.1.0.tar.gz and sphinx_yaq-0.1.0-py3-none-any.whl
+
+Playwright Chromium, using a prestarted local demo server
+  2 tests passed: restrictive CSP and reload persistence
+```
+
+The wheel contains only `yaq.js`, `math.js`, and `css/yaq.css` as browser
+runtime assets. A clean demo HTML build and the editable runtime were searched
+for the removed dependencies, remote extension resources, inline handlers,
+and unsafe HTML/code construction. The CSP fixture permitted only same-origin
+scripts and styles and reported no browser-console errors. The isolated Python
+build required network permission to fetch setuptools; no tests were skipped.
+The Playwright runner's automatic web-server teardown hung in this Windows
+sandbox, so the browser tests were run successfully against a separately
+started local server. The only runtime warning was Node's `NO_COLOR` and
+`FORCE_COLOR` combination.
+
 ## Legacy validation baseline
 
 ```text
@@ -424,9 +485,8 @@ These are characterization statements, not desired final behavior.
 
 None.
 
-Recommended next action: execute Batch 06 in `D:\sphinx-yaq` to remove the
-remaining legacy browser dependencies and unsafe string-built DOM paths while
-preserving grading, state, and persistence behavior.
+Recommended next action: execute Batch 07 in `D:\sphinx-yaq` for the planned
+accessibility and interaction work.
 
 ## Batch checklist
 
@@ -436,7 +496,7 @@ preserving grading, state, and persistence behavior.
 - [x] Batch 03 — JavaScript module extraction without behavior changes
 - [x] Batch 04 — Explicit runtime state and P0 behavior fixes
 - [x] Batch 05 — localStorage-only persistence
-- [ ] Batch 06 — Legacy dependency removal and DOM security
+- [x] Batch 06 — Legacy dependency removal and DOM security
 - [ ] Batch 07 — Accessibility and interaction
 - [ ] Batch 08 — Comparison robustness and determinism
 - [ ] Batch 09 — Release readiness, documentation, and final audit

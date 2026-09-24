@@ -12,7 +12,7 @@ npm ci
 npm run test:js
 ```
 
-The integration tests load the vendored jQuery, math.js, and the generated
+The integration tests load the vendored math.js and the generated
 `yaq.js` bundle into an isolated jsdom window. Each test closes
 that window so runtime state cannot leak into the next test. The suite
 characterizes all three question types and every documented

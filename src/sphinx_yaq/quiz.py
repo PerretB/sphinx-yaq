@@ -201,15 +201,12 @@ def spoiler_inline(
 
 
 def visit_spoiler_inline_node(self, node: SpoilerInline) -> None:
-    self.body.append(
-        '<span class="yaq-spoiler-inline-hidden" '
-        'onclick="this.classList.remove(\'yaq-spoiler-inline-hidden\');">'
-    )
+    self.body.append('<button type="button" class="yaq-spoiler-inline yaq-spoiler-inline-hidden">')
     self.body.append(html.escape(node["content"]))
 
 
 def depart_spoiler_inline_node(self, node: SpoilerInline) -> None:
-    self.body.append("</span>")
+    self.body.append("</button>")
 
 
 def ensure_html_builder(app) -> None:
@@ -227,7 +224,6 @@ def setup(app):
     app.add_js_file("sphinx_yaq/math.js")
     app.add_js_file("sphinx_yaq/yaq.js")
 
-    app.add_css_file("https://use.fontawesome.com/8916f45f90.css")
     app.add_css_file("sphinx_yaq/css/yaq.css")
 
     app.add_node(Quiz, html=(visit_quiz_node, depart_quiz_node))
