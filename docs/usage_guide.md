@@ -89,6 +89,7 @@ Renders a text input box (`<input type="text">`).
 - **`fuzzy`**: Enables fuzzy matching using Levenshtein edit distance and diacritics removal. Accepts minor typos or missing accents (e.g., `reponse` for `réponse`).
 - **`sequence`**: Treats answers as whitespace/comma-separated lists where order does not matter (e.g., `Churchill Stalin Roosevelt`).
 - **`ordered`**: Used alongside `sequence` to require items to match in exact order.
+- **`nospace`**: Removes Unicode whitespace from both answers before comparison.
 - **`math`**: Treats the answer as a mathematical expression (e.g., `n^2 + 3`). Evaluates the expression numerically using `math.js` over random values defined in `vars`.
 - **`regex`**: Treats the answer as a regular expression pattern to test against user input.
 
@@ -119,6 +120,44 @@ Renders a text input box (`<input type="text">`).
     7. Regular expression matching with custom displayed answer:
        :quiz:`{"type":"FB", "answer":"a+b*c$", "flags":"regex", "displayed-answer":"e.g., ac or abbc"}`
 ```
+
+---
+
+### Fill-in comparison rules (Batch 08A)
+
+These rules apply to `FB` answers without `math` or `regex`. Each grading call
+uses the same comparison rules and gives the same result for the same input.
+
+| Mode | Accepted | Rejected |
+| --- | --- | --- |
+| Default exact | `café` = `cafe` followed by a combining acute mark (canonical Unicode); `01` = `1`; `1e3` = `1000` | `Paris` ≠ `paris`; `réponse` ≠ `reponse`; `Paris` ≠ ` Paris `; `yes!` ≠ `yes`; `0` ≠ empty input |
+| `nospace` | `New York` = `N e w\tY o r k` | `New-York` ≠ `New York` |
+| `fuzzy` | `réponse` = `reponse` or `rponse`; `abcde` = `abcdx` at the default threshold | `Paris` ≠ `London`; `abcde` ≠ `abcdx` at threshold `0.81` |
+| `sequence` | `red green blue` = `blue,red;green`; `red red blue` = `blue red red` | `red red blue` ≠ `red blue blue`; `red green` ≠ `red green blue` |
+| `sequence,ordered` | `1,2,3` = `1; 2 3` | `1,2,3` ≠ `3 2 1` |
+
+Exact text is case, accent, punctuation, and whitespace sensitive after Unicode
+NFC normalization. If both sides match the decimal grammar
+`[+-]?(digits[.digits] | .digits)[e[+-]digits]`, they are compared as exact
+decimal values; leading zeros, signs, fractions, and exponents are supported.
+Empty text, surrounding whitespace, hexadecimal/binary literals, `Infinity`,
+and non-finite decimal values do not receive numeric coercion. Large integers
+remain distinct even beyond JavaScript's safe integer range.
+
+Fuzzy matching uses Unicode NFKD normalization, removes combining marks,
+lowercases, and collapses and trims whitespace. Punctuation remains part of
+the edit distance. Similarity is `1 - Levenshtein distance / longer length`,
+counted in Unicode code points, and is accepted at or above the threshold.
+The default is `0.8`; integrations calling `testAnswer` directly can set
+`fuzzyThreshold` from `0` through `1`. The authoring `flags` syntax does not
+expose a threshold setting. `nospace` is applied before fuzzy normalization.
+
+Sequences split on whitespace, commas, and semicolons. Repeated separators do
+not make empty tokens; an empty sequence is never accepted. Unordered matching
+requires a one-to-one match of every token, including duplicates. `ordered`
+compares tokens by position. Both modes reject different token counts.
+
+The `math` and `regex` comparison rules are unchanged in Batch 08A.
 
 ---
 

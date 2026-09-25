@@ -11,7 +11,7 @@ describe("testAnswer", () => {
   it.each([
     ["exact text", "Yalta", "Yalta", {}, true],
     ["different text", "Yalta", "yalta", {}, false],
-    ["legacy numeric coercion", "01", "1", {}, true],
+    ["decimal with leading zero", "01", "1", {}, true],
     ["no-space", "New York", "N e w\tY o r k", { noSpace: true }, true],
     ["regex", "^a+b*c$", "aaabbbc", { regex: true }, true],
     ["unordered sequence", "red green blue", "blue red green", { sequence: true }, true],
@@ -22,19 +22,62 @@ describe("testAnswer", () => {
     expect(testAnswer(correct, given, options)).toBe(expected);
   });
 
-  it("delegates fuzzy comparison without changing its threshold semantics", () => {
+  it("passes the configured threshold to an injected fuzzy comparator", () => {
     const fuzzyEqual = vi.fn(() => true);
 
-    expect(testAnswer("réponse", "reponse", { fuzzy: true, fuzzyEqual })).toBe(true);
-    expect(fuzzyEqual).toHaveBeenCalledWith("réponse", "reponse");
+    expect(testAnswer("réponse", "reponse", { fuzzy: true, fuzzyThreshold: 0.9, fuzzyEqual })).toBe(true);
+    expect(fuzzyEqual).toHaveBeenCalledWith("réponse", "reponse", 0.9);
   });
 
   it("keeps the documented regexp spelling inert", () => {
     expect(testAnswer("^a+b*c$", "aaabbbc", { regexp: true })).toBe(false);
   });
 
-  it("uses the legacy default fuzzy comparator when none is injected", () => {
-    expect(testAnswer("réponse", "reponse", { fuzzy: true })).toBe(false);
+  it.each([
+    ["canonical Unicode", "café", "cafe\u0301", {}, true],
+    ["case matters", "Paris", "paris", {}, false],
+    ["accent matters", "réponse", "reponse", {}, false],
+    ["punctuation matters", "yes!", "yes", {}, false],
+    ["outer spaces matter", "Paris", " Paris ", {}, false],
+    ["interior spaces matter", "New York", "New  York", {}, false],
+    ["numeric decimal exponent", "1e3", "1000", {}, true],
+    ["numeric signs", "+1.0", "1", {}, true],
+    ["numeric whitespace rejected", "1", " 1 ", {}, false],
+    ["empty is not zero", "0", "", {}, false],
+    ["hex is not decimal", "0x10", "16", {}, false],
+    ["binary is not decimal", "0b10", "2", {}, false],
+    ["infinity is not numeric", "Infinity", "1e999", {}, false],
+    ["numeric prefix rejected", "1apple", "1", {}, false],
+    ["large integers stay distinct", "9007199254740992", "9007199254740993", {}, false],
+    ["small decimal magnitudes stay distinct", "1e-999", "2e-999", {}, false],
+    ["noSpace removes all Unicode whitespace", "New York", "N\u00a0e w\nYork", { noSpace: true }, true],
+    ["noSpace keeps punctuation", "New-York", "New York", { noSpace: true }, false],
+    ["fuzzy accents and case", "réponse", "REPONSE", { fuzzy: true }, true],
+    ["fuzzy documented typo", "réponse", "rponse", { fuzzy: true }, true],
+    ["fuzzy punctuation retained", "abcd!", "abcd?", { fuzzy: true }, true],
+    ["fuzzy punctuation can fail threshold", "abcd!", "abcd?", { fuzzy: true, fuzzyThreshold: 0.9 }, false],
+    ["fuzzy threshold boundary", "abcde", "abcdx", { fuzzy: true }, true],
+    ["fuzzy stricter threshold", "abcde", "abcdx", { fuzzy: true, fuzzyThreshold: 0.81 }, false],
+    ["fuzzy different word", "Paris", "London", { fuzzy: true }, false],
+    ["fuzzy whitespace collapsed", "New  York", "new york", { fuzzy: true }, true],
+    ["fuzzy noSpace combined", "New York", "newyork", { fuzzy: true, noSpace: true }, true],
+    ["unordered duplicate permutation", "red red blue", "blue red red", { sequence: true }, true],
+    ["unordered duplicate count", "red red blue", "red blue blue", { sequence: true }, false],
+    ["unordered length mismatch", "red green", "red green blue", { sequence: true }, false],
+    ["ordered duplicate permutation", "red red blue", "red blue red", { sequence: true, ordered: true }, false],
+    ["sequence repeated delimiters", "red,green;blue", " red;; green,,blue ", { sequence: true, ordered: true }, true],
+    ["empty expected sequence", "", "", { sequence: true }, false],
+    ["empty given sequence", "red", " , ; ", { sequence: true }, false],
+    ["fuzzy sequence permutation", "rouge vert bleu", "bleu rouges vert", { sequence: true, fuzzy: true }, true],
+    ["fuzzy sequence needs one-to-one matching", "longword longwords", "longwords longword", { sequence: true, fuzzy: true }, true],
+  ])("uses documented 08A semantics for %s", (_label, correct, given, options, expected) => {
+    for (let repeat = 0; repeat < 5; repeat += 1) {
+      expect(testAnswer(correct, given, options)).toBe(expected);
+    }
+  });
+
+  it.each([-0.01, 1.01, Number.NaN])("rejects invalid fuzzy threshold %s", (fuzzyThreshold) => {
+    expect(() => testAnswer("a", "a", { fuzzy: true, fuzzyThreshold })).toThrow(RangeError);
   });
 
   it("compares compiled mathematical answers through injected dependencies", () => {

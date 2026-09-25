@@ -1,6 +1,6 @@
 # YAQ migration status
 
-Last updated: 2026-09-24
+Last updated: 2026-09-25
 
 ## Overall state
 
@@ -23,7 +23,8 @@ true/false control and its layout.
 
 **Batch 08 — Comparison robustness**
 
-Status: ready to start. Batch 07 is complete.
+Status: sub-batch 08A complete and ready for review. Regex (08B) and math
+(08C) remain pending, so Batch 08 is not complete.
 
 Batch specification: [`migration_batches/08-comparison-robustness.md`](migration_batches/08-comparison-robustness.md)
 
@@ -142,6 +143,54 @@ Batch specification: [`migration_batches/08-comparison-robustness.md`](migration
   control contrast without changing the switch layout.
 - Added Playwright keyboard, role/name, status, axe, narrow-width, zoom, and
   missing-image checks while retaining CSP and reload coverage.
+- Froze the documented exact, numeric, fuzzy, whitespace, and sequence examples
+  in table-driven tests, including repeat grading and Unicode/duplicate cases.
+- Replaced broad numeric coercion with finite decimal parsing and exact decimal
+  comparison; made fuzzy similarity and its threshold explicit; and required
+  one-to-one matches for unordered sequence tokens.
+- Removed the unused runtime fuzzy helper and its Latinise lookup table, then
+  rebuilt the packaged JavaScript bundle. Regex and math grading paths retain
+  their pre-08A behavior.
+
+## Batch 08A decisions and validation
+
+- Default exact matching uses Unicode NFC and remains case, accent,
+  punctuation, and whitespace sensitive. Two valid finite decimal strings may
+  compare by exact decimal value; blanks, hexadecimal/binary literals, and
+  non-finite values do not receive numeric coercion.
+- Fuzzy matching uses NFKD, removes combining marks, lowercases, normalizes
+  whitespace, and compares Unicode code points at similarity >= `0.8` by
+  default. `fuzzyThreshold` can be set from `0` to `1` through the grading API;
+  the authoring syntax does not add a new setting in this sub-batch.
+- Sequences split on whitespace, commas, and semicolons, ignore empty delimiter
+  runs, require equal nonzero token counts, and match duplicate tokens one to
+  one. Ordered sequences compare by position.
+- These are intentional compatibility changes from legacy numeric coercion,
+  hard-coded fuzzy threshold, and empty-sequence handling. Accepted and rejected
+  examples are documented in [`usage_guide.md`](usage_guide.md).
+
+```text
+npx vitest run frontend/tests/grading.test.js (twice)
+  59 tests passed on each run; every 08A table row repeats grading five times
+
+npm run build:js
+  passed; regenerated the packaged JavaScript bundle
+
+npm run test:js
+  stale-bundle check passed; 4 files and 109 tests passed
+
+python -m pytest (target .venv Python 3.12.14)
+  26 tests passed
+
+python -m sphinx -E -b html examples/demo/source examples/demo/build/html
+  passed with Sphinx 9.1.0
+
+git diff --check
+  passed
+```
+
+No tests were skipped or warnings reported by these validations. The full
+Batch 08 acceptance criteria remain pending until 08B and 08C.
 
 ## Batch 07 decisions and validation
 
@@ -540,8 +589,8 @@ These are characterization statements, not desired final behavior.
 
 None.
 
-Recommended next action: execute Batch 07 in `D:\sphinx-yaq` for the planned
-accessibility and interaction work.
+Recommended next action: review 08A, then implement 08B regex validation and
+matching in `D:\sphinx-yaq`.
 
 ## Batch checklist
 
@@ -552,7 +601,7 @@ accessibility and interaction work.
 - [x] Batch 04 — Explicit runtime state and P0 behavior fixes
 - [x] Batch 05 — localStorage-only persistence
 - [x] Batch 06 — Legacy dependency removal and DOM security
-- [ ] Batch 07 — Accessibility and interaction
+- [x] Batch 07 — Accessibility and interaction
 - [ ] Batch 08 — Comparison robustness and determinism
 - [ ] Batch 09 — Release readiness, documentation, and final audit
 

@@ -47,6 +47,94 @@ function allTrim(value) {
   return value.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
 }
 
+const DECIMAL = /^([+-]?)(?:(\d+)(?:\.(\d*))?|\.(\d+))(?:[eE]([+-]?\d+))?$/;
+
+function parseDecimal(value) {
+  const match = DECIMAL.exec(value);
+  if (!match || !Number.isFinite(Number(value))) return null;
+  const fractional = match[3] ?? match[4] ?? "";
+  const digits = ((match[2] ?? "") + fractional).replace(/^0+/, "");
+  if (!digits) return "0";
+  const coefficient = digits.replace(/0+$/, "");
+  const exponent = BigInt(match[5] ?? "0") - BigInt(fractional.length) +
+    BigInt(digits.length - coefficient.length);
+  return `${match[1] === "-" ? "-" : ""}${coefficient}e${exponent}`;
+}
+
+function exactEqual(first, second) {
+  const left = first.normalize("NFC");
+  const right = second.normalize("NFC");
+  if (left === right) return true;
+  const leftNumber = parseDecimal(left);
+  const rightNumber = parseDecimal(right);
+  return leftNumber !== null && rightNumber !== null && leftNumber === rightNumber;
+}
+
+function fuzzyText(value) {
+  return allTrim(value.normalize("NFKD").replace(/\p{M}/gu, "")).toLowerCase();
+}
+
+export function fuzzyEqual(first, second, threshold = 0.8) {
+  if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
+    throw new RangeError("fuzzyThreshold must be between 0 and 1");
+  }
+  const left = Array.from(fuzzyText(first));
+  const right = Array.from(fuzzyText(second));
+  const length = Math.max(left.length, right.length);
+  if (length === 0) return true;
+  let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  for (let row = 1; row <= left.length; row += 1) {
+    const current = [row];
+    for (let column = 1; column <= right.length; column += 1) {
+      current[column] = Math.min(
+        current[column - 1] + 1,
+        previous[column] + 1,
+        previous[column - 1] + (left[row - 1] === right[column - 1] ? 0 : 1),
+      );
+    }
+    previous = current;
+  }
+  return 1 - previous[right.length] / length >= threshold;
+}
+
+function sequenceTokens(value) {
+  const trimmed = value.trim();
+  return trimmed === "" ? [] : trimmed.split(/[\s,;]+/).filter(Boolean);
+}
+
+function compareText(first, second, settings) {
+  const left = settings.noSpace ? first.replace(/\s/gu, "") : first;
+  const right = settings.noSpace ? second.replace(/\s/gu, "") : second;
+  return settings.fuzzy
+    ? settings.fuzzyEqual(left, right, settings.fuzzyThreshold)
+    : exactEqual(left, right);
+}
+
+function compareTextAnswers(correctAnswer, givenAnswer, settings) {
+  if (!settings.sequence) return compareText(correctAnswer, givenAnswer, settings);
+  const expected = sequenceTokens(correctAnswer);
+  const given = sequenceTokens(givenAnswer);
+  if (expected.length === 0 || expected.length !== given.length) return false;
+  if (settings.ordered) {
+    return given.every((value, index) => compareText(expected[index], value, settings));
+  }
+
+  // Find a one-to-one match; greedy matching gives wrong answers for fuzzy tokens.
+  const assigned = Array(expected.length).fill(-1);
+  function place(givenIndex, visited) {
+    for (let expectedIndex = 0; expectedIndex < expected.length; expectedIndex += 1) {
+      if (visited[expectedIndex] || !compareText(expected[expectedIndex], given[givenIndex], settings)) continue;
+      visited[expectedIndex] = true;
+      if (assigned[expectedIndex] === -1 || place(assigned[expectedIndex], visited)) {
+        assigned[expectedIndex] = givenIndex;
+        return true;
+      }
+    }
+    return false;
+  }
+  return given.every((_, index) => place(index, Array(expected.length).fill(false)));
+}
+
 function compareValue(correctAnswers, givenAnswer, options) {
   let candidate = givenAnswer;
   if (options.noSpace) {
@@ -96,6 +184,7 @@ export function testAnswer(correctAnswer, givenAnswer, options = {}) {
   const settings = {
     sequence: false,
     fuzzy: false,
+    fuzzyThreshold: 0.8,
     noSpace: false,
     math: false,
     regex: false,
@@ -103,11 +192,19 @@ export function testAnswer(correctAnswer, givenAnswer, options = {}) {
     mathVariables: {},
     mathTries: 50,
     random: Math.random,
-    fuzzyEqual: (first, second) => first === second,
+    fuzzyEqual,
     compileMath: undefined,
     onCorrectAnswerSyntaxError: () => {},
     ...options,
   };
+
+  if (settings.fuzzy && (!Number.isFinite(settings.fuzzyThreshold) ||
+      settings.fuzzyThreshold < 0 || settings.fuzzyThreshold > 1)) {
+    throw new RangeError("fuzzyThreshold must be between 0 and 1");
+  }
+  if (!settings.math && !settings.regex) {
+    return compareTextAnswers(correctAnswer, givenAnswer, settings);
+  }
 
   const correctAnswers = settings.sequence
     ? allTrim(correctAnswer).split(/[\s,;]+/)

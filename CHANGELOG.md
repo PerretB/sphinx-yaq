@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## 0.1.0 - Unreleased
 
+- Define deterministic fill-in exact, decimal, fuzzy, whitespace, and sequence
+  matching. Unicode canonical equivalents and documented fuzzy typos now pass;
+  blank/hexadecimal numeric coercion, mismatched duplicate tokens, and empty
+  sequences no longer pass. Fuzzy matching uses an explicit `0.8` default
+  threshold and supports a direct grading-call override.
 - Package the imported YAQ Sphinx extension as the `sphinx-yaq` distribution.
 - Namespace the unchanged legacy browser assets under `sphinx_yaq/`.
 - Add the legacy demonstration site and installed-wheel smoke verification.
