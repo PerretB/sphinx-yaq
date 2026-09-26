@@ -1,0 +1,81 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pypi-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require tag on main
+        run: |
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          git merge-base --is-ancestor "$(git rev-parse HEAD)" refs/remotes/origin/main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - name: Require tag to match package version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import tomllib
+
+          version = tomllib.loads(Path('pyproject.toml').read_text())['project']['version']
+          expected = f'v{version}'
+          actual = os.environ['RELEASE_TAG']
+          if actual != expected:
+              raise SystemExit(f'Tag {actual!r} does not match package version {expected!r}')
+          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: python -m pip install -r requirements-test.txt
+      - run: npm ci
+      - run: python -m ruff check
+      - run: python -m ruff format --check
+      - run: python -m pytest
+      - run: npm run test:js
+      - run: npm run build:js
+      - run: git diff --exit-code -- src/sphinx_yaq/_static/sphinx_yaq/yaq.js
+      - run: python -m sphinx -W -E -b html examples/demo/source examples/demo/build/html
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - run: python -m build
+      - run: python scripts/smoke_test_wheel.py --sphinx '9.1.0'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-wheel
+          path: dist/*.whl
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/sphinx-yaq
+    permissions:
+      id-token: write
+      actions: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-wheel
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1

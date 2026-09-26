@@ -2,11 +2,19 @@
 
 YAQ is a Sphinx extension for adding interactive self-assessment quizzes and
 spoilers to HTML documentation. This repository is migrating a legacy
-implementation while preserving its characterized behavior.
+implementation. Release readiness and support details are in
+[docs/release_readiness.md](docs/release_readiness.md).
+
+Sites using a copied `Sphinx_ext` installation should follow the
+[legacy migration guide](docs/migrating_from_legacy.md) before switching.
 
 ## Installation
 
 Install the package and enable it in `conf.py`:
+
+```console
+python -m pip install sphinx-yaq
+```
 
 ```python
 extensions = ["sphinx_yaq"]

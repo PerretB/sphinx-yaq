@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  sphinx-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        sphinx: ['>=7,<8', '>=8,<9', '>=9,<10']
+        exclude:
+          - python: '3.10'
+            sphinx: '>=9,<10'
+          - python: '3.14'
+            sphinx: '>=7,<8'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -r requirements-test.txt '${{ matrix.sphinx }}'
+      - run: python -m compileall -q src/sphinx_yaq
+      - run: python -m ruff check
+      - run: python -m ruff format --check
+      - run: python -m pytest
+      - run: python -m sphinx -W -E -b html examples/demo/source examples/demo/build/html
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check:syntax
+      - run: npm run test:js
+      - run: npm run build:js
+      - run: git diff --exit-code -- src/sphinx_yaq/_static/sphinx_yaq/yaq.js
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: python -m pip install -r requirements-test.txt
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: python -m sphinx -W -E -b html examples/demo/source examples/demo/build/html
+      - run: npm run test:e2e
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install build
+      - run: python -m build
+      - run: python scripts/smoke_test_wheel.py --sphinx '9.1.0'

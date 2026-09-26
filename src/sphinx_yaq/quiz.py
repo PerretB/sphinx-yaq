@@ -10,6 +10,7 @@ from typing import Any
 
 from docutils import nodes, utils
 import docutils.parsers.rst.directives as validators
+from sphinx.application import Sphinx
 from sphinx.errors import ExtensionError
 from sphinx.util.docutils import Directive
 
@@ -40,9 +41,7 @@ def _json(value: Any) -> str:
 def visit_quiz_question_node(self, node: QuizQuestion) -> None:
     model_json = _json(node["model"].as_dict())
     encoded = base64.standard_b64encode(model_json.encode("utf-8")).decode("ascii")
-    self.body.append(
-        self.starttag(node, "span", "", CLASS="yaq-q", **{"data-model": encoded})
-    )
+    self.body.append(self.starttag(node, "span", "", CLASS="yaq-q", **{"data-model": encoded}))
 
 
 def depart_quiz_question_node(self, node: QuizQuestion) -> None:
@@ -82,22 +81,17 @@ def quiz_question(
         # role text to the JSON parser.
         model: Question = parse_question(utils.unescape(text, restore_backslashes=True))
     except ModelValidationError as error:
-        return _role_error(
-            inliner, rawtext, lineno, f"Invalid :quiz: model: {error}."
-        )
+        return _role_error(inliner, rawtext, lineno, f"Invalid :quiz: model: {error}.")
     return [QuizQuestion(model=model, args=options or {})], []
 
 
 def visit_quiz_node(self, node: Quiz) -> None:
-    # The current runtime inserts titles through legacy HTML construction.
-    # Preserve its public behavior while making authored strings inert.
+    # Keep the serialized author strings inert before the browser renders them.
     model = {
         "title": html.escape(node["title"], quote=True),
         "uid": html.escape(node["uid"], quote=True),
     }
-    self.body.append(
-        self.starttag(node, "div", "", CLASS="yaq", **{"data-model": _json(model)})
-    )
+    self.body.append(self.starttag(node, "div", "", CLASS="yaq", **{"data-model": _json(model)}))
 
 
 def depart_quiz_node(self, node: Quiz) -> None:
@@ -116,9 +110,7 @@ class QuizDirective(Directive):
         document = self.state.document
         state = get_document_state(document)
         if state.quiz_depth:
-            return [
-                document.reporter.error("Quiz directives cannot be nested.", line=self.lineno)
-            ]
+            return [document.reporter.error("Quiz directives cannot be nested.", line=self.lineno)]
         if "title" not in self.options:
             return [
                 document.reporter.error(
@@ -129,7 +121,9 @@ class QuizDirective(Directive):
 
         quiz_id = self.arguments[0]
         if not quiz_id:
-            return [document.reporter.error("Quiz identifiers must not be empty.", line=self.lineno)]
+            return [
+                document.reporter.error("Quiz identifiers must not be empty.", line=self.lineno)
+            ]
 
         source = document.current_source or str(document.get("source", ""))
         original = state.quiz_ids.get(quiz_id)
@@ -176,9 +170,7 @@ class SpoilerDirective(Directive):
         state = get_document_state(document)
         if state.spoiler_depth:
             return [
-                document.reporter.error(
-                    "Spoiler directives cannot be nested.", line=self.lineno
-                )
+                document.reporter.error("Spoiler directives cannot be nested.", line=self.lineno)
             ]
 
         result = SpoilerBlock(name=self.name, title=self.arguments[0])
@@ -201,7 +193,9 @@ def spoiler_inline(
 
 
 def visit_spoiler_inline_node(self, node: SpoilerInline) -> None:
-    self.body.append('<button type="button" aria-label="Show hidden text" class="yaq-spoiler-inline yaq-spoiler-inline-hidden">')
+    self.body.append(
+        '<button type="button" aria-label="Show hidden text" class="yaq-spoiler-inline yaq-spoiler-inline-hidden">'
+    )
     self.body.append(html.escape(node["content"]))
 
 
@@ -209,7 +203,7 @@ def depart_spoiler_inline_node(self, node: SpoilerInline) -> None:
     self.body.append("</button>")
 
 
-def ensure_html_builder(app) -> None:
+def ensure_html_builder(app: Sphinx) -> None:
     if app.builder.format != "html":
         raise ExtensionError(
             "sphinx-yaq supports HTML builders only; "
@@ -217,7 +211,7 @@ def ensure_html_builder(app) -> None:
         )
 
 
-def setup(app):
+def setup(app: Sphinx) -> dict[str, str | bool]:
     static_path = os.path.join(os.path.dirname(__file__), "_static")
     app.config.html_static_path.append(static_path)
 

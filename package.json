@@ -7,6 +7,7 @@
     "test:js": "npm run check:js && vitest run --coverage",
     "test:js:watch": "vitest",
     "test:e2e": "playwright test",
+    "check:syntax": "node --check frontend/src/grading.js && node --check frontend/src/model.js && node --check frontend/src/runtime.js && node --check frontend/src/storage.js",
     "build:js": "node scripts/build-js.mjs",
     "check:js": "node scripts/build-js.mjs --check"
   },

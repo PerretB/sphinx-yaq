@@ -51,9 +51,7 @@ class FillBlankQuestion:
         if self.size is not None:
             result["size"] = self.size
         if self.variables:
-            result["vars"] = {
-                name: [bounds[0], bounds[1]] for name, bounds in self.variables
-            }
+            result["vars"] = {name: [bounds[0], bounds[1]] for name, bounds in self.variables}
         if self.flags:
             result["flags"] = ",".join(self.flags)
         if self.displayed_answer is not None:
@@ -125,9 +123,7 @@ def _parse_variables(
         if not isinstance(name, str) or not name:
             raise ModelValidationError("math variable names must be non-empty strings")
         if not isinstance(interval, list) or len(interval) != 2:
-            raise ModelValidationError(
-                f'math variable "{name}" must have a two-number interval'
-            )
+            raise ModelValidationError(f'math variable "{name}" must have a two-number interval')
         lower, upper = interval
         if (
             isinstance(lower, bool)
@@ -187,9 +183,7 @@ def parse_question(text: str) -> Question:
         _reject_unknown(raw_model, _FB_PROPERTIES)
         answer = _require_string(raw_model, "answer")
         size = raw_model.get("size")
-        if size is not None and (
-            isinstance(size, bool) or not isinstance(size, int) or size <= 0
-        ):
+        if size is not None and (isinstance(size, bool) or not isinstance(size, int) or size <= 0):
             raise ModelValidationError('"size" must be a positive integer')
         flags = _parse_flags(raw_model)
         variables = _parse_variables(raw_model, flags, answer)

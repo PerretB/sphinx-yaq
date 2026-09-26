@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## 0.1.0 - Unreleased
 
+- Document the non-drop-in migration from copied `Sphinx_ext` installations,
+  including stricter author diagnostics, grading changes, and progress reset.
+- Declare Python 3.14 support with Sphinx 8.2 or 9 and add a tag-driven,
+  main-commit-gated PyPI wheel publishing workflow using Trusted Publishing.
+- Add release CI, package and browser verification, a support policy, and a
+  migration guide. The release remains blocked on regex and math comparison
+  work from Batch 08.
 - Define deterministic fill-in exact, decimal, fuzzy, whitespace, and sequence
   matching. Unicode canonical equivalents and documented fuzzy typos now pass;
   blank/hexadecimal numeric coercion, mismatched duplicate tokens, and empty

@@ -21,12 +21,114 @@ true/false control and its layout.
 
 ## Current batch
 
-**Batch 08 — Comparison robustness**
+**Batch 09 — Release readiness (partial; prerequisite Batch 08 open)**
 
-Status: sub-batch 08A complete and ready for review. Regex (08B) and math
-(08C) remain pending, so Batch 08 is not complete.
+Status: release documentation, CI configuration, CSS cleanup, package inspection,
+and local validations have advanced. Batch 09 is **not complete**: Batch 08B
+(regex) and 08C (math) remain pending, the full Python CI matrix has not run,
+and no CI run exists for this revision. No release should be cut yet.
 
-Batch specification: [`migration_batches/08-comparison-robustness.md`](migration_batches/08-comparison-robustness.md)
+Batch specification: [`migration_batches/09-release-readiness.md`](migration_batches/09-release-readiness.md)
+
+## Batch 09 work and validation (2026-09-25)
+
+Consumer migration audit: the packaged extension is not a drop-in replacement
+for sites using `Sphinx_ext.quiz`. A dedicated
+[`migrating_from_legacy.md`](migrating_from_legacy.md) now covers the import and
+asset switch, preserved markup, stricter model validation, intentional grading
+changes, unsupported `regexp`, HTML-only builds, UI customization limits, and
+the lack of cloud/cookie progress import. It links to staging build and browser
+checks. Documentation only; no runtime behavior changed in this follow-up.
+
+Follow-up release automation: Python 3.14 was added to `Requires-Python`, the
+classifier list, and CI. The Python 3.14 CI rows use Sphinx 8 or 9; package
+metadata requires Sphinx 8.2 or newer on Python 3.14. A separate
+`.github/workflows/release.yml` now validates a `v<package-version>` tag on a
+commit reachable from `main`, repeats build/test/browser/wheel checks, and
+publishes only the wheel through PyPI Trusted Publishing. The PyPI publisher
+and matching GitHub environment must be configured by the repository owner;
+this workflow has not run or published anything. A temporary Python 3.14.5
+interpreter ran all 26 Python tests and warning-as-error demo builds with both
+Sphinx 8.2.3 and 9.1.0; a fresh Python 3.14.5 wheel install and HTML fixture
+also passed with Sphinx 9.1.0. This validates local runtime support, while
+the hosted CI and actual PyPI publishing path remain unverified. Both workflow
+files parsed as YAML, and the release trigger, job dependency, and 3.14 CI
+matrix entries were checked. The new workflow is documented in
+`docs/release_readiness.md`.
+
+- Added `.github/workflows/ci.yml`: Python 3.10–3.14 with Sphinx 7–9
+  compatible combinations, Node 24 JavaScript checks, Chromium browser/axe
+  tests, and package build plus clean-wheel smoke test. These jobs are defined
+  but **have not run on GitHub Actions** for this revision.
+- Set package bounds to Python `>=3.10,<3.15` and Sphinx `>=7,<10` on
+  Python below 3.14, or Sphinx `>=8.2,<10` on Python 3.14; added matching
+  classifiers. The original environment has Python 3.12.14; a temporary
+  Python 3.14.5 interpreter was installed for the follow-up validation.
+- Added `node --check` for editable JavaScript, Python `compileall`, Ruff lint
+  and format checks to CI; configured `.editorconfig` and Ruff and added type
+  hints to the Sphinx setup/builder hooks.
+  Removed two unused CSS selectors and obsolete commented declarations;
+  namespaced theme color variables, narrow-width layout, and print rules were
+  added without changing question logic. No Sphinx deprecations appeared in
+  the local warning-as-error build or pytest run.
+- Added `docs/release_readiness.md`, corrected current authoring/configuration
+  guidance in `docs/usage_guide.md`, and made `docs/README.md` distinguish
+  historical analysis from current package documentation. `CHANGELOG.md`
+  records the unreleased work and release blockers.
+- Enhanced `scripts/smoke_test_wheel.py` to require exactly the four Python
+  modules and three runtime assets in the wheel and reject remote YAQ asset
+  references in the built HTML. It runs outside the repository with
+  `PYTHONPATH` removed and verifies copied installed assets.
+
+| Validation | Evidence |
+| --- | --- |
+| `npm ci` | Passed after network permission; 114 packages, zero audit vulnerabilities. Initial sandbox attempt failed to fetch `axe-core`. |
+| `npm run check:syntax` | Passed for all four editable JavaScript modules. |
+| `npm run test:js` | Passed: stale bundle check and 109 tests; 94.44% statement coverage. |
+| `npm run build:js` | Passed; regenerated package bundle. |
+| `python -m compileall -q src/sphinx_yaq` | Passed with Python 3.12.14. |
+| `python -m ruff check` / `python -m ruff format --check` | Passed: lint clean, 17 files formatted. |
+| `python -m pytest` | Passed: 26 tests, no skips or warnings. |
+| `python -m sphinx -W -E -b html examples/demo/source examples/demo/build/html` | Passed with Sphinx 9.1.0, no warnings. Demo imports `sphinx_yaq` without source path injection. |
+| `npm run test:e2e` | Passed against a prestarted local server: four Chromium tests, including keyboard, axe, responsive/zoom, same-origin CSP, console, and reload checks. Only Node's `NO_COLOR`/`FORCE_COLOR` warning. |
+| `python -m build` | Passed isolated build with setuptools 84.0.0: wheel and sdist. A prior non-isolated attempt lacked setuptools in the test venv. |
+| Clean wheel, Python 3.12.14 | Passed with Sphinx 7.0.0, 8.2.3, and 9.1.0. Each temporary environment installed the wheel, built HTML with `-W`, imported from outside the repository, copied all three assets, and checked exact wheel content and local YAQ asset references. |
+| Wheel contents | Four Python files (`__init__`, `models`, `quiz`, `state`), three assets (`yaq.js`, `math.js`, `css/yaq.css`), and distribution metadata/license only. No demo, tests, source files, cloud assets, or copied extension. |
+| Source distribution | 132 entries; includes release and legacy migration guides, CI and release workflows, and `.editorconfig` along with source, tests, and demo. |
+
+### Complete definition-of-done audit
+
+Evidence refers to tests and files above or to completed earlier batches.
+“Deferred” means the migration is not signed off; owner and reason are explicit.
+
+| Definition-of-done item | Result and evidence / owner and reason |
+| --- | --- |
+| Wheel and sdist build | Complete locally: isolated `python -m build` produced both archives. |
+| Clean wheel builds HTML | Complete locally: smoke tests with Sphinx 7.0.0, 8.2.3, 9.1.0 on Python 3.12.14. |
+| No consumer `sys.path` manipulation | Complete: demo and temporary smoke fixture import installed `sphinx_yaq`; smoke rejects repository source imports. |
+| Namespaced static files in wheel | Complete: exact seven-file package assertion and copied asset check. |
+| Build-time model parsing and validation | Complete: `tests/python/test_models.py` and Sphinx integration suite, 26 passing tests total. |
+| Duplicate IDs diagnosed | Complete: Sphinx integration test for document-local duplicate IDs. |
+| Unsupported builders fail early | Complete: non-HTML builder test and documented HTML-only error. |
+| No cloud/auth/cookies | Complete in Batch 05; current wheel has only intended local runtime files. |
+| LocalStorage resilience and reload | Complete: storage unit tests plus Playwright reload test. |
+| Consistent TF, SC, FB transitions | Complete for the Batch 04 state contract, covered by direct and integration JavaScript tests. |
+| Comparison behavior documented and unit tested | **Deferred, release blocker — owner: repository maintainer.** Exact/numeric/fuzzy/sequence are covered by Batch 08A; regex validation and deterministic math (08B/08C) are unfinished. |
+| No jQuery or Watch.JS dependency | Complete in Batches 04/06; exact wheel inventory has neither. |
+| No unsafe HTML interpolation | Complete for current quiz UI, covered by model-text and restrictive CSP browser test. |
+| Semantic, keyboard, labelled controls and text status | Complete for automated coverage: Batch 07 and current keyboard/axe tests. Manual screen-reader speech/high-contrast review is **deferred — owner: repository maintainer; reason: no assistive-technology lab in this sandbox**. |
+| All suites pass in CI | **Deferred, release blocker — owner: repository maintainer.** Jobs are configured, but no Actions run on this revision; Python 3.10, 3.11, and 3.13 remain unavailable locally. Python 3.14.5 passed local Sphinx 8.2/9.1 validation. |
+| No unexpected browser console errors | Complete for tested Chromium examples: CSP and reload browser tests. Other engines are outside the declared automated support. |
+| Documentation and changelog reflect release | **Deferred, release blocker — owner: repository maintainer.** Current pre-release docs and notes are updated, but Batch 08 behavior and CI evidence must land before a final release note/signoff. |
+| Demo uses installed extension, separate from runtime | Complete: `examples/demo/source/conf.py` uses `sphinx_yaq`; wheel inventory excludes the demo. |
+
+Additional Batch 09 acceptance items: CSS print and theme variables are in
+place, but print rendering has not been visually inspected (**deferred — owner:
+repository maintainer; reason: no print visual QA run**). The offline generated
+page check establishes that YAQ assets resolve locally and the CSP test runs
+without remote scripts or styles; unrelated Sphinx theme resources are outside
+the YAQ package. The declared Python/Sphinx matrix and CI jobs require a green
+Actions run before claiming matrix support or marking Batch 09 complete.
 
 ## Completed work
 
@@ -587,10 +689,14 @@ These are characterization statements, not desired final behavior.
 
 ## Active blockers
 
-None.
+- Batch 08B regex and 08C math comparison contracts remain open. Their owner
+  is the repository maintainer; they must be completed before release.
+- A green CI run on the declared Python/Sphinx matrix and browser/package jobs
+  is required. Owner: repository maintainer; local Python 3.12.14 and 3.14.5
+  checks cannot establish a hosted Actions result or cover 3.10/3.11/3.13.
 
-Recommended next action: review 08A, then implement 08B regex validation and
-matching in `D:\sphinx-yaq`.
+Recommended next action: complete 08B and 08C in separately reviewed work,
+then run CI and close the Batch 09 deferred items before release.
 
 ## Batch checklist
 

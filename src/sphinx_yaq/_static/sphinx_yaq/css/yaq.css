@@ -1,3 +1,9 @@
+.yaq, .yaq-spoiler-block{
+	--yaq-accent: #386d99;
+	--yaq-border: #253574;
+	--yaq-focus: #162f62;
+}
+
 .yaq{
 	display: none;
 }
@@ -19,7 +25,7 @@
 	font-size : 120%;
 	font-weight: 700;
 	color: white;
-	background-color : #386d99;
+	background-color : var(--yaq-accent);
 	width : 100%;
 	box-sizing: border-box;
 	padding : 5px 10px 5px 10px;
@@ -92,7 +98,7 @@
 	vertical-align: middle;
 	box-sizing: border-box;
 	color: white;
-	background-color : #386d99;
+	background-color : var(--yaq-accent);
 	border: 0;
 	font: inherit;
 }
@@ -111,7 +117,7 @@
 .yaq-root :is(button, input, select, summary):focus-visible,
 .yaq-spoiler-inline:focus-visible,
 .yaq-spoiler-block summary:focus-visible{
-  outline: 3px solid #162f62;
+  outline: 3px solid var(--yaq-focus, #162f62);
   outline-offset: 2px;
 }
 @media (prefers-reduced-motion: reduce){.yaq-blink{animation: none;}}
@@ -140,11 +146,7 @@
 	width : 100px;
 	background-color : transparent;
 	display: inline-block;
-	/*border-radius : 3px;*/
 	font-size:0px;
-	/*border-width : 1px;
-	border-style	: solid;
-	border-color : #253574;*/
 	box-sizing: border-box;
 	margin-right: 15px;
 }
@@ -167,22 +169,21 @@
   vertical-align: middle;
   box-sizing: border-box;
   font-size:initial;
-  border: 1px solid #253574;
+  border: 1px solid var(--yaq-border);
 	background: transparent;
 	cursor: pointer;
-  /*border-radius:3px;*/
 }
 
 .yaq-switch3-button + .yaq-switch3-button
 {
   border-left-width : 1px;
   border-left-style	: solid;
-  border-left-color : #253574;
+  border-left-color : var(--yaq-border);
 }
 
 .yaq-switch3-button-active
 {
-	background-color : #386d99;
+	background-color : var(--yaq-accent);
   color : #FFF;
   font-weight: 700;
 }
@@ -198,14 +199,6 @@
   background-color : #EBEBE4;
   color : #545454;
   font-weight: 700;
-}
-
-.yaq-correctAnswer{
-	background-color : green;
-}
-
-.yaq-wrongAnswer{
-	background-color : red;
 }
 
 .yaq-wrongTF-section, .yaq-correctTF-section{
@@ -263,7 +256,7 @@
   vertical-align: middle;
   box-sizing: border-box;
   color: white;
-  background-color: #386d99;
+	background-color: var(--yaq-accent);
   cursor: pointer;
 }
 
@@ -273,4 +266,17 @@
   padding-left: 10px;
   padding-top: 5px;
   margin-left: 14px;
+}
+
+@media (max-width: 480px){
+  .yaq-content, .yaq-TFQuestion{margin-left: 0;}
+  .yaq-explanation{margin-left: 0;}
+  .yaq-footer{display: flex; flex-wrap: wrap;}
+}
+
+@media print{
+  .yaq{display: block;}
+  .yaq-root{break-inside: avoid;}
+  .yaq-button, .yaq-switch3, .yaq-FBField, .yaq-root select{display: none;}
+  .yaq-spoiler-block-content{display: block;}
 }

@@ -62,8 +62,8 @@ def test_spoiler_role_and_directive_emit_current_html(app):
     assert '<summary class="yaq-spoiler-block-title">Hint</summary>' in html
     assert 'class="yaq-spoiler-inline yaq-spoiler-inline-hidden"' in html
     assert 'aria-label="Show hidden text"' in html
-    assert 'onclick=' not in html
-    assert 'use.fontawesome.com' not in html
+    assert "onclick=" not in html
+    assert "use.fontawesome.com" not in html
     assert "hidden inline text" in html
 
 
@@ -84,10 +84,7 @@ def test_all_documented_question_forms_and_spoilers_build(app, warning):
     assert warning.getvalue() == ""
     html = (Path(app.outdir) / "index.html").read_text(encoding="utf-8")
     encoded_models = re.findall(r'class="yaq-q" data-model="([^"]+)"', html)
-    models = [
-        json.loads(base64.b64decode(encoded).decode("utf-8"))
-        for encoded in encoded_models
-    ]
+    models = [json.loads(base64.b64decode(encoded).decode("utf-8")) for encoded in encoded_models]
 
     assert models == [
         {"type": "FB", "answer": "réponse"},
@@ -129,9 +126,7 @@ def test_all_documented_question_forms_and_spoilers_build(app, warning):
 
 
 @pytest.mark.sphinx("html", testroot="special-characters")
-def test_unicode_quotes_backslashes_ampersands_and_angles_survive_emission(
-    app, warning
-):
+def test_unicode_quotes_backslashes_ampersands_and_angles_survive_emission(app, warning):
     app.build()
 
     assert warning.getvalue() == ""
@@ -172,9 +167,9 @@ def test_invalid_models_have_source_aware_diagnostics_for_each_rule(app, warning
         'flag "math" cannot be combined with other flags',
         'math questions with variables require a non-empty "vars" object',
         '"vars" is only valid with the "math" flag',
-        'must have a two-number interval',
-        'interval bounds must be finite numbers',
-        'lower bound must not exceed its upper bound',
+        "must have a two-number interval",
+        "interval bounds must be finite numbers",
+        "lower bound must not exceed its upper bound",
         '"displayed-answer" must be a string',
         'SC "values" must contain non-empty choices',
         'SC "answer" must be one of the declared choices',

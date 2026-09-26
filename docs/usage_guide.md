@@ -31,9 +31,9 @@ An exercise block is introduced using the `quiz` directive. Every exercise must 
 Questions are embedded inline within the content of a `quiz` directive using the `:quiz:` role. The role content is a JSON object string.
 
 > [!IMPORTANT]
-> Because the configuration is a JSON string inside reST markup, double quotes (`"`) and backslashes (`\`) inside JSON values must be escaped:
-> - `"` becomes `\"`
-> - `\` becomes `\\`
+> Write a valid JSON object inside the role. Escape a quote or backslash only
+> when it is part of a JSON string value; the delimiters shown below need no
+> extra escaping. Sphinx reports invalid declarations with a source location.
 
 ---
 
@@ -123,7 +123,7 @@ Renders a text input box (`<input type="text">`).
 
 ---
 
-### Fill-in comparison rules (Batch 08A)
+### Fill-in comparison rules
 
 These rules apply to `FB` answers without `math` or `regex`. Each grading call
 uses the same comparison rules and gives the same result for the same input.
@@ -157,7 +157,12 @@ not make empty tokens; an empty sequence is never accepted. Unordered matching
 requires a one-to-one match of every token, including duplicates. `ordered`
 compares tokens by position. Both modes reject different token counts.
 
-The `math` and `regex` comparison rules are unchanged in Batch 08A.
+`regex` uses the authored pattern to test the student's text. The legacy
+`regexp` spelling is unsupported. `math` evaluates expressions at sampled
+values from `vars`; it is a numerical check, not symbolic proof. Both modes
+still have known validation and determinism gaps; see
+[release readiness](release_readiness.md) before using them for consequential
+assessment.
 
 ---
 
@@ -213,23 +218,17 @@ is ignored when its schema or fingerprint no longer matches the page.
 
 ---
 
-## 5. Internationalization (`i18n`) & Custom UI Strings
+## 5. Configuration and accessibility
 
-UI text labels (such as button captions and error messages) are configured directly in `source/Sphinx_ext/_static/yaq.js` in the `texts` object:
+Enable `sphinx_yaq` in `conf.py`; there are no extension-specific Sphinx
+configuration settings. The runtime's UI strings live in
+`frontend/src/runtime.js` in the `texts` object. Developers changing them must
+rebuild the packaged bundle with `npm run build:js`; editing the generated
+`src/sphinx_yaq/_static/sphinx_yaq/yaq.js` directly is unsupported.
 
-```javascript
-/* String constants */
-var texts = {
-    "True" : "V",
-    "False": "F",
-    "dontKnow": "?",
-    "gradeButtonText": "Corriger",
-    "resetButtonText": "Recommencer",
-    "solveButtonText": "Montrer la solution",
-    "wrongMathVariableError": "L'expression contient une variable inconnue, les variables connues sont : ",
-    "wrongMathSyntaxError": "L'expression contient une erreur de syntaxe.",
-    "wrongMathError": "Expression mathematique : erreur inconnue."
-};
-```
-
-To translate the interface (e.g. for English documentation), update the values in this dictionary.
+Quiz controls have accessible names, visible feedback text, keyboard operation,
+and a polite status announcement. Inline spoilers use buttons and block spoilers
+use native `details`/`summary`. Correct answers are sent to the browser and
+therefore cannot be kept secret. Use YAQ for self-assessment rather than secure
+examinations. See [release readiness](release_readiness.md) for the tested
+browser and remaining manual accessibility checks.

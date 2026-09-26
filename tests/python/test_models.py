@@ -32,9 +32,7 @@ def test_parse_question_rejects_invalid_models(source, message):
 
 
 def test_parse_question_normalizes_legacy_shapes():
-    model = parse_question(
-        '{"type":"FB","answer":"x","flags":"sequence, fuzzy","size":3}'
-    )
+    model = parse_question('{"type":"FB","answer":"x","flags":"sequence, fuzzy","size":3}')
     assert model.as_dict() == {
         "type": "FB",
         "answer": "x",
