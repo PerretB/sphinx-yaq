@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - run: python -m pip install -r requirements-test.txt '${{ matrix.sphinx }}'
+      - run: python -m pip install -r requirements-test.txt 'Sphinx${{ matrix.sphinx }}'
       - run: python -m compileall -q src/sphinx_yaq
       - run: python -m ruff check
       - run: python -m ruff format --check
