@@ -1,6 +1,6 @@
 # YAQ migration status
 
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ## Overall state
 
@@ -31,6 +31,14 @@ and no CI run exists for this revision. No release should be cut yet.
 Batch specification: [`migration_batches/09-release-readiness.md`](migration_batches/09-release-readiness.md)
 
 ## Batch 09 work and validation (2026-09-25)
+
+CI correction (2026-09-26): the reported `sphinx-matrix` runs failed during
+dependency installation because the workflow passed a bare version range
+(`>=7,<8`) to pip. The install command now prefixes the matrix value with
+`Sphinx`. Local requirement parsing reproduced the failure before the change
+and validates all three expanded requirements afterward: `Sphinx>=7,<8`,
+`Sphinx>=8,<9`, and `Sphinx>=9,<10`. A new hosted CI run is still required;
+this correction does not establish that the remaining matrix steps pass.
 
 Consumer migration audit: the packaged extension is not a drop-in replacement
 for sites using `Sphinx_ext.quiz`. A dedicated
