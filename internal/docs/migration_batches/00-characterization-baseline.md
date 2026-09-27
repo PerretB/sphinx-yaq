@@ -57,8 +57,8 @@ Verify that the legacy repository did not change and that imported target produc
 - Important escaping and Unicode cases are recorded.
 - Known defects remain explicit characterization cases.
 - Both test suites pass.
-- `docs/migration_status.md` records the expanded test totals and newly discovered behavior.
+- `internal/docs/migration_status.md` records the expanded test totals and newly discovered behavior.
 
 ## Suggested Codex prompt
 
-> Implement Batch 00 from `docs/migration_batches/00-characterization-baseline.md` in `D:\sphinx-yaq`. Import the minimum legacy implementation and test infrastructure needed for the baseline, then expand only the target characterization suite. Do not modify `C:\Users\perre\Dropbox\cours\demoSphinx` or intentionally change imported production behavior. Preserve known defects, run both JavaScript and Python suites in the target, report remaining gaps, and update `docs/migration_status.md` when all acceptance criteria pass.
+> Implement Batch 00 from `internal/docs/migration_batches/00-characterization-baseline.md` in `D:\sphinx-yaq`. Import the minimum legacy implementation and test infrastructure needed for the baseline, then expand only the target characterization suite. Do not modify `C:\Users\perre\Dropbox\cours\demoSphinx` or intentionally change imported production behavior. Preserve known defects, run both JavaScript and Python suites in the target, report remaining gaps, and update `internal/docs/migration_status.md` when all acceptance criteria pass.

@@ -7,7 +7,9 @@ include package.json
 include pytest.ini
 include requirements-test.txt
 include vitest.config.js
-recursive-include docs *.md
+include .readthedocs.yaml
+recursive-include docs *.rst *.py *.txt
+prune docs/_build
 recursive-include .github/workflows *.yml
 recursive-include examples *.bat *.css *.png *.rst Makefile
 recursive-include frontend *.js

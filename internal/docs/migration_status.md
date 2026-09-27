@@ -123,7 +123,7 @@ also passed with Sphinx 9.1.0. This validates local runtime support, while
 the hosted CI and actual PyPI publishing path remain unverified. Both workflow
 files parsed as YAML, and the release trigger, job dependency, and 3.14 CI
 matrix entries were checked. The new workflow is documented in
-`docs/release_readiness.md`.
+`internal/docs/release_readiness.md`.
 
 - Added `.github/workflows/ci.yml`: Python 3.10–3.14 with Sphinx 7–9
   compatible combinations, Node 24 JavaScript checks, Chromium browser/axe
@@ -140,8 +140,8 @@ matrix entries were checked. The new workflow is documented in
   namespaced theme color variables, narrow-width layout, and print rules were
   added without changing question logic. No Sphinx deprecations appeared in
   the local warning-as-error build or pytest run.
-- Added `docs/release_readiness.md`, corrected current authoring/configuration
-  guidance in `docs/usage_guide.md`, and made `docs/README.md` distinguish
+- Added `internal/docs/release_readiness.md`, corrected current authoring/configuration
+  guidance in `internal/docs/usage_guide.md`, and made `internal/docs/README.md` distinguish
   historical analysis from current package documentation. `CHANGELOG.md`
   records the unreleased work and release blockers.
 - Enhanced `scripts/smoke_test_wheel.py` to require exactly the four Python
@@ -202,10 +202,10 @@ Actions run before claiming matrix support or marking Batch 09 complete.
 ## Completed work
 
 - Analyzed the Python extension, browser runtime, dependencies, CSS, demo configuration, and authoring syntax.
-- Created `docs/technical_description.md`.
-- Created `docs/prioritized_improvements.md`.
-- Created `docs/migration_plan.md` with P0/P1/P2 traceability and final definition of done.
-- Split the implementation into ten reviewed contracts under `docs/migration_batches/`.
+- Created `internal/docs/technical_description.md`.
+- Created `internal/docs/prioritized_improvements.md`.
+- Created `internal/docs/migration_plan.md` with P0/P1/P2 traceability and final definition of done.
+- Split the implementation into ten reviewed contracts under `internal/docs/migration_batches/`.
 - Added repository-level workflow, organization, testing, security, and handover guidance in `AGENTS.md`.
 - Added the initial JavaScript characterization harness and nine passing Vitest/jsdom tests.
 - Added four passing Sphinx HTML-build tests using Sphinx's pytest fixtures.
@@ -790,3 +790,32 @@ When advancing a batch:
 4. update validation results;
 5. record blockers or deliberately deferred items;
 6. check a batch only after all acceptance criteria pass.
+
+## Public documentation preparation
+
+Moved the private engineering documents to `internal/docs/`. The new `docs/`
+is an English Sphinx user guide with executable examples, authoring reference,
+local progress documentation, and Read the Docs configuration. The README now
+presents the first release; previous development changelog entries are preserved
+in `development_changelog.md`. Quiz UI strings are translated into English.
+This documentation work does not close the outstanding comparison or release
+acceptance criteria. Validation results are recorded after the documentation build.
+
+Validation for this documentation update:
+
+- Sphinx 9.1.0 public HTML build with `-W --keep-going -E`: passed without warnings.
+- Existing demo HTML build with `-W -E`: passed without warnings.
+- `npm run build:js` and `npm run test:js`: bundle current; 114 tests passed.
+- `python -m pytest`: 26 tests passed.
+- `npm run test:e2e` with a prestarted server: all 6 Chromium tests passed.
+- Public documentation browser check: all 6 quizzes initialized, an English
+  single-choice quiz graded successfully, no page errors, and no horizontal
+  overflow at 390 pixels. Desktop and mobile screenshots inspected.
+- `python -m build`: built the source distribution and wheel after allowing
+  network access for isolated setuptools installation. The non-isolated attempt
+  lacked setuptools; the first isolated attempt could not install it in the sandbox.
+- `python scripts/smoke_test_wheel.py`: passed against the installed wheel and
+  Sphinx 9.1.0. Pip reported ignored cache-deserialization warnings; Playwright
+  reported the existing `NO_COLOR`/`FORCE_COLOR` warning. No tests were skipped.
+- No hosted Read the Docs build or deployment was performed. The repository
+  configuration is ready for import into Read the Docs.

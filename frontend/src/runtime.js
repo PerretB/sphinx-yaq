@@ -18,15 +18,15 @@ var yaq_app= (function(){
 	
 	/*String constants*/
 	var texts = {
-		"True" : "V",
+		"True" : "T",
 		"False": "F",
 		"dontKnow": "?",
-		"gradeButtonText": "Corriger",
-		"resetButtonText": "Recommencer",
-		"solveButtonText": "Montrer la solution",
-		"wrongMathVariableError": "L'expression contient une variable inconnue, les variables connues sont : ",
-		"wrongMathSyntaxError": "L'expression contient une erreur de syntaxe.",
-		"wrongMathError": "Expression mathematique : erreur inconnue."
+		"gradeButtonText": "Check answers",
+		"resetButtonText": "Restart",
+		"solveButtonText": "Show solution",
+		"wrongMathVariableError": "The expression contains an unknown variable. Known variables: ",
+		"wrongMathSyntaxError": "The expression contains a syntax error.",
+		"wrongMathError": "Mathematical expression: unknown error."
 	};
 
 	function getDefault (tryValue, defaultValue)
@@ -1068,7 +1068,7 @@ var yaq_app= (function(){
 				
 				var root = createElement("div", "yaq-root");
 				this.rootDomElement = root;
-				const heading = createElement("h2", "yaq-head", "Exercice " + (this.__exerciceNumber + 1) + " : " + this.__title);
+				const heading = createElement("h2", "yaq-head", "Exercise " + (this.__exerciceNumber + 1) + " : " + this.__title);
 				root.append(heading);
 				root.setAttribute("role", "region");
 				root.setAttribute("aria-label", heading.textContent);

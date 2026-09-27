@@ -224,3 +224,6 @@ __marimo__/
 node_modules/
 test-results/
 playwright-report/
+
+# Public Sphinx documentation output
+docs/_build/

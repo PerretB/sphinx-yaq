@@ -61,5 +61,5 @@ Run each table-driven suite repeatedly to demonstrate deterministic results.
 
 ## Suggested Codex prompt
 
-> Implement only sub-batch 08A from `docs/migration_batches/08-comparison-robustness.md`. Freeze expected examples in table-driven tests, then make exact/numeric/fuzzy/sequence behavior deterministic and documented. Do not modify regex or math behavior yet. Run all validations and update `docs/migration_status.md` before stopping for review.
+> Implement only sub-batch 08A from `internal/docs/migration_batches/08-comparison-robustness.md`. Freeze expected examples in table-driven tests, then make exact/numeric/fuzzy/sequence behavior deterministic and documented. Do not modify regex or math behavior yet. Run all validations and update `internal/docs/migration_status.md` before stopping for review.
 

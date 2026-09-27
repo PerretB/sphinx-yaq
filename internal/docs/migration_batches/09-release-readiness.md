@@ -20,7 +20,7 @@ Finish cleanup, establish the supported version matrix, verify installed artifac
 - Build wheel/sdist, inspect contents, install wheel cleanly, and build docs offline.
 - Complete installation, authoring, configuration, local progress, limitations, accessibility, and migration documentation.
 - Add release notes and semantic-versioning policy.
-- Audit every item in `docs/migration_plan.md` Definition of done.
+- Audit every item in `internal/docs/migration_plan.md` Definition of done.
 - Ensure the demo consumes the installed package.
 
 ## Out of scope
@@ -52,9 +52,9 @@ Also run clean-wheel installation, Sphinx version matrix, Playwright, accessibil
 - Clean installation and HTML build work without repository path injection or remote extension assets.
 - Documentation matches actual behavior and limitations.
 - Migration guide explains removal of copied extension files, Firebase/cloud behavior, and local progress clearing.
-- `docs/migration_status.md` marks the migration complete and records final validation evidence.
+- `internal/docs/migration_status.md` marks the migration complete and records final validation evidence.
 
 ## Suggested Codex prompt
 
-> Implement Batch 09 from `docs/migration_batches/09-release-readiness.md`. Audit the complete definition of done, finish only cleanup/documentation/CI/package work, and do not add features. Run the full version, browser, accessibility, and clean-wheel validation set. Update `docs/migration_status.md` with evidence for every completed or explicitly deferred item.
+> Implement Batch 09 from `internal/docs/migration_batches/09-release-readiness.md`. Audit the complete definition of done, finish only cleanup/documentation/CI/package work, and do not add features. Run the full version, browser, accessibility, and clean-wheel validation set. Update `internal/docs/migration_status.md` with evidence for every completed or explicitly deferred item.
 

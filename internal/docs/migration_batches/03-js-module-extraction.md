@@ -55,5 +55,5 @@ Rebuild assets and verify the working bundle matches generated output.
 
 ## Suggested Codex prompt
 
-> Implement Batch 03 from `docs/migration_batches/03-js-module-extraction.md`. Extract pure grading and state modules with direct tests and a reproducible build, while preserving current observable behavior. Keep known runtime defects unchanged for Batch 04. Run all JavaScript, Sphinx, and package validations and update `docs/migration_status.md`.
+> Implement Batch 03 from `internal/docs/migration_batches/03-js-module-extraction.md`. Extract pure grading and state modules with direct tests and a reproducible build, while preserving current observable behavior. Keep known runtime defects unchanged for Batch 04. Run all JavaScript, Sphinx, and package validations and update `internal/docs/migration_status.md`.
 
