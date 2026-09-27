@@ -48,7 +48,6 @@ describe("YAQ runtime characterization", () => {
       ["wrongMarker", "✘", "Incorrect"],
       ["correctMarker", "✔", "Correct"],
       ["solutionMarker", "ⓘ", "Solution shown"],
-      ["unansweredMarker", "?", "Unanswered"],
     ]) {
       const marker = document.querySelector(`[data-role="${role}"]`);
       expect(marker.title).toBe(label);
@@ -56,6 +55,7 @@ describe("YAQ runtime characterization", () => {
       expect(marker.querySelector(".yaq-feedback-text").textContent.trim()).toBe(label);
       expect(marker.querySelector(".yaq-feedback-text").classList.contains("yaq-visually-hidden")).toBe(true);
     }
+    expect(document.querySelector('[data-role="unansweredMarker"]')).toBeNull();
   });
 
   it("replaces placeholders with a titled quiz and the three footer actions", async () => {
@@ -74,7 +74,7 @@ describe("YAQ runtime characterization", () => {
     expect(jsdomErrors).toEqual([]);
   });
 
-  it("renders Python-escaped titles and choice labels as text", async () => {
+  it("renders titles and choice labels as text", async () => {
     const escaped = "<script>alert(1)</script>";
     const { document, jsdomErrors } = await loadQuestions(
       [{ type: "SC", values: `safe,${escaped}`, answer: "safe" }],
@@ -91,6 +91,16 @@ describe("YAQ runtime characterization", () => {
     ).toContain("<script>alert(1)</script>");
     expect(document.querySelector("script")).toBeNull();
     expect(jsdomErrors).toEqual([]);
+  });
+
+  it("preserves title apostrophes, quotes, ampersands, and literal entities", async () => {
+    const title = "Hiérarchie d'héritage \"quoted\" & <tag> &amp;";
+    const { document } = await loadQuestions(
+      [{ type: "TF", answer: "T" }],
+      { title },
+    );
+    expect(document.querySelector(".yaq-head").textContent).toBe(`Exercice 1 : ${title}`);
+    expect(document.querySelector(".yaq-head tag")).toBeNull();
   });
 
   it("grades an exact fill-in answer and enables restart", async () => {

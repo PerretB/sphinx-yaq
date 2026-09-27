@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## 0.1.0 - Unreleased
 
+- Preserve apostrophes, quotes, and ampersands in exercise titles instead of
+  displaying HTML entities, while continuing to render titles safely as text.
+- Blink unanswered questions on correction without displaying a question mark
+  icon; retain the live announcement of unanswered counts.
 - Restore legacy true/false correction: a wrong choice remains marked incorrect
   and is locked until restart, including after restoring saved progress.
 - Show question status as icons with tooltips, retaining visually hidden labels
