@@ -242,6 +242,8 @@ def setup(app: Sphinx) -> dict[str, str | bool]:
 
     return {
         "version": "0.1.0",
-        "parallel_read_safe": False,
-        "parallel_write_safe": False,
+        # Parsing state lives on each document, not the shared environment.
+        # Visitors only serialize their node into the current HTML translator.
+        "parallel_read_safe": True,
+        "parallel_write_safe": True,
     }

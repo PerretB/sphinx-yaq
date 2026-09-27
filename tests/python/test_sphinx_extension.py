@@ -33,8 +33,16 @@ def test_html_build_emits_quiz_models_and_assets(app, warning):
     assert model == {"type": "FB", "answer": "Yalta", "flags": "fuzzy"}
     extension = app.extensions["sphinx_yaq"]
     assert extension.version == "0.1.0"
-    assert extension.parallel_read_safe is False
-    assert extension.parallel_write_safe is False
+    assert extension.parallel_read_safe is True
+    assert extension.parallel_write_safe is True
+
+
+@pytest.mark.sphinx("html", testroot="basic")
+def test_sphinx_allows_parallel_build_without_fallback_warnings(app, warning):
+    # Exercise Sphinx's safety checks even on platforms without fork support.
+    assert app.is_parallel_allowed("read") is True
+    assert app.is_parallel_allowed("write") is True
+    assert warning.getvalue() == ""
 
 
 @pytest.mark.sphinx("html", testroot="basic")
