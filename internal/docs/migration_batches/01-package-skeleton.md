@@ -57,4 +57,4 @@ Also inspect wheel contents and perform a clean installed-wheel Sphinx HTML buil
 
 ## Suggested Codex prompt
 
-> Implement only Batch 01 from `docs/migration_batches/01-package-skeleton.md` in `D:\sphinx-yaq`. Create the installable package from the imported implementation without intentional behavior changes. Preserve the characterization suite, leave the legacy reference untouched, add installed-wheel smoke verification, run all validations, and update `docs/migration_status.md`. Do not begin parser or JavaScript refactoring.
+> Implement only Batch 01 from `internal/docs/migration_batches/01-package-skeleton.md` in `D:\sphinx-yaq`. Create the installable package from the imported implementation without intentional behavior changes. Preserve the characterization suite, leave the legacy reference untouched, add installed-wheel smoke verification, run all validations, and update `internal/docs/migration_status.md`. Do not begin parser or JavaScript refactoring.

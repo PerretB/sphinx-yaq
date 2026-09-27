@@ -58,5 +58,5 @@ Run Playwright interaction/accessibility tests and record any manual checks that
 
 ## Suggested Codex prompt
 
-> Implement Batch 07 from `docs/migration_batches/07-accessibility.md`. Convert the current UI to semantic, keyboard-operable controls with accessible labels and textual/live feedback. Preserve grading, state, and persistence semantics. Add browser interaction and axe tests, run all validations, and update `docs/migration_status.md`.
+> Implement Batch 07 from `internal/docs/migration_batches/07-accessibility.md`. Convert the current UI to semantic, keyboard-operable controls with accessible labels and textual/live feedback. Preserve grading, state, and persistence semantics. Add browser interaction and axe tests, run all validations, and update `internal/docs/migration_status.md`.
 

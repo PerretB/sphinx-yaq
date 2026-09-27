@@ -58,5 +58,5 @@ Add a browser integration test when the e2e harness is available; otherwise reta
 
 ## Suggested Codex prompt
 
-> Implement Batch 04 from `docs/migration_batches/04-runtime-state.md`. Replace watcher-driven state with explicit deterministic transitions, correct the TF retry/reveal behavior, and isolate initialization failures. Do not add persistence, redesign accessibility, or change comparison semantics. Run all relevant tests and update `docs/migration_status.md`.
+> Implement Batch 04 from `internal/docs/migration_batches/04-runtime-state.md`. Replace watcher-driven state with explicit deterministic transitions, correct the TF retry/reveal behavior, and isolate initialization failures. Do not add persistence, redesign accessibility, or change comparison semantics. Run all relevant tests and update `internal/docs/migration_status.md`.
 

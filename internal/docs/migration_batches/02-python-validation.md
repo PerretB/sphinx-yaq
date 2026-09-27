@@ -62,5 +62,5 @@ Include Sphinx fixtures for every validation error and an unsupported-builder sm
 
 ## Suggested Codex prompt
 
-> Implement only Batch 02 from `docs/migration_batches/02-python-validation.md`. Add test-led build-time parsing, validation, safe serialization, document-scoped duplicate-ID detection, and explicit HTML-only enforcement. Preserve valid legacy content and do not redesign the JavaScript runtime. Run all suites and update `docs/migration_status.md` with each intentional compatibility change.
+> Implement only Batch 02 from `internal/docs/migration_batches/02-python-validation.md`. Add test-led build-time parsing, validation, safe serialization, document-scoped duplicate-ID detection, and explicit HTML-only enforcement. Preserve valid legacy content and do not redesign the JavaScript runtime. Run all suites and update `internal/docs/migration_status.md` with each intentional compatibility change.
 

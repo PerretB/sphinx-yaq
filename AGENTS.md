@@ -12,11 +12,11 @@ Repository roles are fixed for the migration:
 
 Use these files according to the task:
 
-- `docs/migration_plan.md` for architecture, priorities, and the final definition of done.
-- `docs/migration_status.md` for the current batch, completed work, active decisions, and blockers.
-- `docs/migration_batches/` for the implementation contract of a specific batch.
+- `internal/docs/migration_plan.md` for architecture, priorities, and the final definition of done.
+- `internal/docs/migration_status.md` for the current batch, completed work, active decisions, and blockers.
+- `internal/docs/migration_batches/` for the implementation contract of a specific batch.
 - `tests/README.md` for the current characterization-test setup.
-- `docs/technical_description.md` for existing behavior and architecture.
+- `internal/docs/technical_description.md` for existing behavior and architecture.
 
 Read only the documents relevant to the requested work. Do not load every migration document for a small isolated task.
 
@@ -35,12 +35,12 @@ Read only the documents relevant to the requested work. Do not load every migrat
 - Preserve behavior unless the active batch identifies an intentional correction.
 - Add or update a failing test before an intentional behavior change.
 - Keep the target repository usable and its copied demo buildable at every completed batch.
-- Update `docs/migration_status.md` when a batch materially advances, a decision is made, or a blocker is discovered.
+- Update `internal/docs/migration_status.md` when a batch materially advances, a decision is made, or a blocker is discovered.
 - Do not mark a batch complete until all of its acceptance criteria and validation commands pass.
 
 ## Current and target organization
 
-The target repository starts as a minimal Git repository. During migration, inspect `docs/migration_status.md` before assuming that a listed target path has been created.
+The target repository starts as a minimal Git repository. During migration, inspect `internal/docs/migration_status.md` before assuming that a listed target path has been created.
 
 The target layout is:
 
@@ -144,10 +144,10 @@ For completed implementation work, report:
 - intentional compatibility changes;
 - tests and build commands run with results;
 - warnings or validations not run;
-- changes to `docs/migration_status.md`;
+- changes to `internal/docs/migration_status.md`;
 - the next recommended batch, without starting it.
 
-Keep `docs/migration_plan.md` stable as the architectural source of truth. Put day-to-day progress and decisions in `docs/migration_status.md`.
+Keep `internal/docs/migration_plan.md` stable as the architectural source of truth. Put day-to-day progress and decisions in `internal/docs/migration_status.md`.
 
 ## Repository safety
 
@@ -155,3 +155,9 @@ Keep `docs/migration_plan.md` stable as the architectural source of truth. Put d
 - Do not rewrite Git history or perform destructive cleanup.
 - Do not commit unless the user explicitly asks for a commit.
 - Do not edit generated archives or vendored minified dependencies as a substitute for changing their source or build process.
+
+## Public documentation
+
+Public English Sphinx documentation lives in `docs/`; internal engineering and
+migration records live in `internal/docs/` and are not published on Read the Docs.
+Build public docs with `python -m sphinx -W -E -b html docs docs/_build/html`.

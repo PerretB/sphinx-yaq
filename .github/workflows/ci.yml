@@ -28,6 +28,7 @@ jobs:
       - run: python -m ruff format --check
       - run: python -m pytest
       - run: python -m sphinx -W -E -b html examples/demo/source examples/demo/build/html
+      - run: python -m sphinx -W --keep-going -E -b html docs docs/_build/html
 
   frontend:
     runs-on: ubuntu-latest

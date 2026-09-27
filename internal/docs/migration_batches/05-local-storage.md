@@ -65,5 +65,5 @@ Run the browser reload test and inspect generated HTML for Firebase or authentic
 
 ## Suggested Codex prompt
 
-> Implement Batch 05 from `docs/migration_batches/05-local-storage.md`. Completely remove Firebase, authentication, cloud synchronization, and cookies. Add only resilient versioned localStorage persistence with the decisions recorded in `docs/migration_status.md`. Add unit and real-browser reload tests, run all validations, and update migration status.
+> Implement Batch 05 from `internal/docs/migration_batches/05-local-storage.md`. Completely remove Firebase, authentication, cloud synchronization, and cookies. Add only resilient versioned localStorage persistence with the decisions recorded in `internal/docs/migration_status.md`. Add unit and real-browser reload tests, run all validations, and update migration status.
 

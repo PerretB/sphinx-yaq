@@ -65,12 +65,12 @@ describe("YAQ runtime characterization", () => {
 
     expect(document.querySelector(".yaq-root")).not.toBeNull();
     expect(document.querySelector(".yaq-head").textContent).toContain(
-      "Exercice 1 : Fixture quiz",
+      "Exercise 1 : Fixture quiz",
     );
     expect(document.querySelector(".yaq-FBQuestion input")).not.toBeNull();
-    expect(button(document, "Corriger")).not.toBeNull();
-    expect(button(document, "Montrer la solution")).not.toBeNull();
-    expect(button(document, "Recommencer")).not.toBeNull();
+    expect(button(document, "Check answers")).not.toBeNull();
+    expect(button(document, "Show solution")).not.toBeNull();
+    expect(button(document, "Restart")).not.toBeNull();
     expect(jsdomErrors).toEqual([]);
   });
 
@@ -99,7 +99,7 @@ describe("YAQ runtime characterization", () => {
       [{ type: "TF", answer: "T" }],
       { title },
     );
-    expect(document.querySelector(".yaq-head").textContent).toBe(`Exercice 1 : ${title}`);
+    expect(document.querySelector(".yaq-head").textContent).toBe(`Exercise 1 : ${title}`);
     expect(document.querySelector(".yaq-head tag")).toBeNull();
   });
 
@@ -111,13 +111,13 @@ describe("YAQ runtime characterization", () => {
 
     input.value = "Yalta";
     input.dispatchEvent(new window.Event("input", { bubbles: true }));
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
 
     expect(input.disabled).toBe(true);
     expect(
       document.querySelector('[data-role="correctMarker"]').classList,
     ).not.toContain("yaq-hidden");
-    expect(isDisplayed(button(document, "Recommencer"))).toBe(true);
+    expect(isDisplayed(button(document, "Restart"))).toBe(true);
   });
 
   it("keeps a wrong fill-in answer editable and can reveal the solution", async () => {
@@ -128,15 +128,15 @@ describe("YAQ runtime characterization", () => {
 
     input.value = "1944";
     input.dispatchEvent(new window.Event("input", { bubbles: true }));
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
 
     expect(input.disabled).toBe(false);
     expect(
       document.querySelector('[data-role="wrongMarker"]').classList,
     ).not.toContain("yaq-hidden");
-    expect(isDisplayed(button(document, "Montrer la solution"))).toBe(true);
+    expect(isDisplayed(button(document, "Show solution"))).toBe(true);
 
-    await click(button(document, "Montrer la solution"));
+    await click(button(document, "Show solution"));
 
     expect(input.value).toBe("1945");
     expect(input.disabled).toBe(true);
@@ -160,7 +160,7 @@ describe("YAQ runtime characterization", () => {
     inputs[0].dispatchEvent(new window.Event("input", { bubbles: true }));
     inputs[1].value = "bleu rouges vert";
     inputs[1].dispatchEvent(new window.Event("input", { bubbles: true }));
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
 
     expect(inputs.every((input) => input.disabled)).toBe(true);
     expect(
@@ -177,7 +177,7 @@ describe("YAQ runtime characterization", () => {
     const input = document.querySelector(".yaq-FBQuestion input");
 
     await enter(input, "N e w\tY o r k");
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
 
     expect(input.disabled).toBe(true);
     expect(
@@ -194,7 +194,7 @@ describe("YAQ runtime characterization", () => {
 
     await enter(inputs[0], "1; 2 3");
     await enter(inputs[1], "3 2 1");
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
 
     const questions = [...document.querySelectorAll(".yaq-Question")];
     expect(
@@ -217,7 +217,7 @@ describe("YAQ runtime characterization", () => {
     const input = document.querySelector(".yaq-FBQuestion input");
 
     await enter(input, "aaabbbc");
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
 
     expect(input.disabled).toBe(true);
     expect(
@@ -232,7 +232,7 @@ describe("YAQ runtime characterization", () => {
     const input = document.querySelector(".yaq-FBQuestion input");
 
     await enter(input, "aaabbbc");
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
 
     // Known defect: the prose documents `regexp`, but the runtime checks `regex`.
     expect(input.disabled).toBe(false);
@@ -254,7 +254,7 @@ describe("YAQ runtime characterization", () => {
 
     input.value = "n*n + 3";
     input.dispatchEvent(new window.Event("input", { bubbles: true }));
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
 
     expect(input.disabled).toBe(true);
     expect(
@@ -281,13 +281,13 @@ describe("YAQ runtime characterization", () => {
 
     await enter(inputs[0], "n +");
     await enter(inputs[1], "m^2 + 3");
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
 
     const warnings = [...document.querySelectorAll('[data-role="warningMarker"]')];
     expect(warnings.every((warning) => !warning.classList.contains("yaq-hidden"))).toBe(true);
-    expect(warnings[0].title).toContain("erreur de syntaxe");
+    expect(warnings[0].title).toContain("syntax error");
     // Known defect: an undeclared symbol falls through to the generic error text.
-    expect(warnings[1].title).toContain("erreur inconnue");
+    expect(warnings[1].title).toContain("unknown error");
     expect(warnings[1].title).toContain("m");
     expect(inputs.every((input) => !input.disabled)).toBe(true);
   });
@@ -298,7 +298,7 @@ describe("YAQ runtime characterization", () => {
     ]);
     const input = document.querySelector(".yaq-FBQuestion input");
 
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
 
     expect(input.disabled).toBe(false);
     expect(
@@ -307,7 +307,7 @@ describe("YAQ runtime characterization", () => {
     expect(
       document.querySelector('[data-role="correctMarker"]').classList,
     ).toContain("yaq-hidden");
-    expect(isDisplayed(button(document, "Recommencer"))).toBe(false);
+    expect(isDisplayed(button(document, "Restart"))).toBe(false);
   });
 
   it("grades a single-choice question and resets its selection", async () => {
@@ -318,10 +318,10 @@ describe("YAQ runtime characterization", () => {
 
     select.value = "Potsdam";
     select.dispatchEvent(new window.Event("change", { bubbles: true }));
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
 
     expect(select.disabled).toBe(true);
-    await click(button(document, "Recommencer"));
+    await click(button(document, "Restart"));
     expect(select.disabled).toBe(false);
     expect(select.value).toBe("");
   });
@@ -331,8 +331,8 @@ describe("YAQ runtime characterization", () => {
     const input = document.querySelector("input");
 
     await enter(input, "yes");
-    await click(button(document, "Corriger"));
-    await click(button(document, "Recommencer"));
+    await click(button(document, "Check answers"));
+    await click(button(document, "Restart"));
 
     expect(input.value).toBe("");
     expect(input.disabled).toBe(false);
@@ -346,9 +346,9 @@ describe("YAQ runtime characterization", () => {
     const input = document.querySelector("input");
 
     await enter(input, "no");
-    await click(button(document, "Corriger"));
-    expect(isDisplayed(button(document, "Recommencer"))).toBe(false);
-    await click(button(document, "Recommencer"));
+    await click(button(document, "Check answers"));
+    expect(isDisplayed(button(document, "Restart"))).toBe(false);
+    await click(button(document, "Restart"));
 
     expect(input.value).toBe("");
     expect(input.disabled).toBe(false);
@@ -364,10 +364,10 @@ describe("YAQ runtime characterization", () => {
     const input = document.querySelector("input");
 
     await enter(input, "wrong");
-    await click(button(document, "Corriger"));
-    await click(button(document, "Montrer la solution"));
+    await click(button(document, "Check answers"));
+    await click(button(document, "Show solution"));
     expect(input.value).toBe("shown answer");
-    await click(button(document, "Recommencer"));
+    await click(button(document, "Restart"));
 
     expect(input.value).toBe("");
     expect(input.disabled).toBe(false);
@@ -381,9 +381,9 @@ describe("YAQ runtime characterization", () => {
     const input = document.querySelector("input");
 
     await enter(input, "no");
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
     await enter(input, "yes");
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
 
     expect(input.disabled).toBe(true);
     expect(
@@ -395,33 +395,33 @@ describe("YAQ runtime characterization", () => {
     const { document } = await loadQuestions([{ type: "TF", answer: "T" }]);
 
     await click(document.querySelector('[data-index="0"]'));
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
 
     expect(
       document.querySelector('[data-role="correctMarker"]').classList,
     ).not.toContain("yaq-hidden");
-    expect(isDisplayed(button(document, "Recommencer"))).toBe(true);
+    expect(isDisplayed(button(document, "Restart"))).toBe(true);
   });
 
   it.each([["T", "2"], ["F", "0"]])("locks a wrong true/false answer (%s) until restart", async (answer, wrongIndex) => {
     const { document } = await loadQuestions([{ type: "TF", answer }]);
 
     await click(document.querySelector(`[data-index="${wrongIndex}"]`));
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
 
     expect(
       document.querySelector('[data-role="wrongMarker"]').classList,
     ).not.toContain("yaq-hidden");
-    expect(isDisplayed(button(document, "Montrer la solution"))).toBe(false);
-    expect(isDisplayed(button(document, "Corriger"))).toBe(false);
-    expect(isDisplayed(button(document, "Recommencer"))).toBe(true);
+    expect(isDisplayed(button(document, "Show solution"))).toBe(false);
+    expect(isDisplayed(button(document, "Check answers"))).toBe(false);
+    expect(isDisplayed(button(document, "Restart"))).toBe(true);
     expect(document.querySelector('[role="status"]').textContent).toContain("1 incorrect, 0 unanswered, 0 solution shown");
     for (const control of document.querySelectorAll('[data-index]')) expect(control.disabled).toBe(true);
 
     await click(document.querySelector(`[data-index="${wrongIndex === "0" ? "2" : "0"}"]`));
     expect(document.querySelector(`[data-index="${wrongIndex}"]`).getAttribute("aria-pressed")).toBe("true");
 
-    await click(button(document, "Recommencer"));
+    await click(button(document, "Restart"));
     expect(document.querySelector('[data-index="1"]').getAttribute("aria-pressed")).toBe("true");
     for (const control of document.querySelectorAll('[data-index]')) expect(control.disabled).toBe(false);
   });
@@ -430,8 +430,8 @@ describe("YAQ runtime characterization", () => {
     const { document } = await loadQuestions([{ type: "TF", answer: "T" }]);
 
     await click(document.querySelector('[data-index="2"]'));
-    await click(button(document, "Corriger"));
-    await click(button(document, "Montrer la solution"));
+    await click(button(document, "Check answers"));
+    await click(button(document, "Show solution"));
 
     expect(document.querySelector('[data-index="2"]').classList).toContain(
       "yaq-switch3-button-active",
@@ -446,7 +446,7 @@ describe("YAQ runtime characterization", () => {
     const markup = quizMarkup({ questions: [{ type: "TF", answer: "T" }] });
     harness = await loadRuntime(markup);
     await click(harness.document.querySelector('[data-index="2"]'));
-    await click(button(harness.document, "Corriger"));
+    await click(button(harness.document, "Check answers"));
     harness.window.yaq_app.storage.flush();
     const key = harness.window.localStorage.key(0);
     let saved = harness.window.localStorage.getItem(key);
@@ -457,7 +457,7 @@ describe("YAQ runtime characterization", () => {
     expect(document.querySelector('[data-index="2"]').getAttribute("aria-pressed")).toBe("true");
     for (const control of document.querySelectorAll('[data-index]')) expect(control.disabled).toBe(true);
     expect(document.querySelector('[data-role="wrongMarker"]').classList).not.toContain("yaq-hidden");
-    expect(isDisplayed(button(document, "Recommencer"))).toBe(true);
+    expect(isDisplayed(button(document, "Restart"))).toBe(true);
   });
 
   it("rejects duplicate runtime quiz identifiers without damaging prose", async () => {
@@ -499,7 +499,7 @@ describe("YAQ runtime characterization", () => {
 
     const secondInput = roots[1].querySelector("input");
     await enter(secondInput, "other");
-    await click(buttonWithin(roots[1], "Corriger"));
+    await click(buttonWithin(roots[1], "Check answers"));
     expect(secondInput.disabled).toBe(true);
     expect(roots[0].querySelector("input").disabled).toBe(false);
   });
@@ -520,7 +520,7 @@ describe("YAQ runtime characterization", () => {
     for (const [index, answer] of answers.entries()) {
       await enter(inputs[index], answer);
     }
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
 
     expect(inputs.every((input) => input.disabled)).toBe(true);
     expect(inputs.map((input) => input.value)).toEqual(answers);
@@ -556,7 +556,7 @@ describe("YAQ runtime characterization", () => {
     expect(document.querySelectorAll(".yaq-Question")).toHaveLength(1);
     const input = document.querySelector("input");
     await enter(input, "works");
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
     expect(input.disabled).toBe(true);
   });
 
@@ -579,12 +579,12 @@ describe("YAQ runtime characterization", () => {
     let roots = [...harness.document.querySelectorAll(".yaq-root")];
 
     await enter(roots[0].querySelector("input"), "yes");
-    await click(buttonWithin(roots[0], "Corriger"));
+    await click(buttonWithin(roots[0], "Check answers"));
     await enter(roots[1].querySelector("input"), "no");
-    await click(buttonWithin(roots[1], "Corriger"));
+    await click(buttonWithin(roots[1], "Check answers"));
     await enter(roots[2].querySelector("input"), "no");
-    await click(buttonWithin(roots[2], "Corriger"));
-    await click(buttonWithin(roots[2], "Montrer la solution"));
+    await click(buttonWithin(roots[2], "Check answers"));
+    await click(buttonWithin(roots[2], "Show solution"));
     await enter(roots[3].querySelector("input"), "draft");
     harness.window.yaq_app.storage.flush();
 
@@ -614,11 +614,11 @@ describe("YAQ runtime characterization", () => {
   it("removes saved progress on restart", async () => {
     const { document, window } = await loadQuestions([{ type: "FB", answer: "yes" }]);
     await enter(document.querySelector("input"), "yes");
-    await click(button(document, "Corriger"));
+    await click(button(document, "Check answers"));
     window.yaq_app.storage.flush();
     expect(window.localStorage.length).toBe(1);
 
-    await click(button(document, "Recommencer"));
+    await click(button(document, "Restart"));
 
     expect(window.localStorage.length).toBe(0);
   });

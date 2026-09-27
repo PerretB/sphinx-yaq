@@ -24,8 +24,8 @@ test("YAQ styles take precedence over later theme rules", async ({ page }) => {
   const quiz = page.locator(".yaq-root").first();
   await expect(quiz.locator(".yaq-head")).toHaveCSS("color", "rgb(255, 255, 255)");
   await expect(quiz.locator(".yaq-head")).toHaveCSS("padding", "5px 10px");
-  await expect(quiz.getByRole("button", { name: "Corriger" })).toHaveCSS("background-color", "rgb(56, 109, 153)");
-  await expect(quiz.getByRole("button", { name: "Corriger" })).toHaveCSS("padding", "5px 10px");
+  await expect(quiz.getByRole("button", { name: "Check answers" })).toHaveCSS("background-color", "rgb(56, 109, 153)");
+  await expect(quiz.getByRole("button", { name: "Check answers" })).toHaveCSS("padding", "5px 10px");
   await expect(page.locator(".yaq-spoiler-block-title").first()).toHaveCSS("color", "rgb(255, 255, 255)");
   await expect(page.locator(".yaq-spoiler-block-title").first()).toHaveCSS("padding", "5px 10px");
 });
@@ -37,9 +37,9 @@ test("quiz and spoilers work by keyboard with named controls and announced feedb
   const truth = quiz.getByRole("group", { name: /Question .*URSS/ });
   const trueButton = truth.getByRole("button", { name: "True" });
   const falseButton = truth.getByRole("button", { name: "False" });
-  const grade = quiz.getByRole("button", { name: "Corriger" });
-  const reveal = quiz.getByRole("button", { name: "Montrer la solution" });
-  const restart = quiz.getByRole("button", { name: "Recommencer" });
+  const grade = quiz.getByRole("button", { name: "Check answers" });
+  const reveal = quiz.getByRole("button", { name: "Show solution" });
+  const restart = quiz.getByRole("button", { name: "Restart" });
   const status = quiz.getByRole("status");
 
   await expect(answer).toHaveAccessibleName(/Question 1.*Yalta/);
@@ -114,7 +114,7 @@ test("correcting unanswered questions only blinks their controls", async ({ page
   await page.goto("/quiz/");
   const quiz = page.locator(".yaq-root").first();
   for (let attempt = 0; attempt < 2; attempt++) {
-    await quiz.getByRole("button", { name: "Corriger" }).click();
+    await quiz.getByRole("button", { name: "Check answers" }).click();
     await expect(quiz.locator('[data-role="unansweredMarker"]:visible')).toHaveCount(0);
     for (const selector of ["input", "select", ".yaq-switch3"]) {
       const controls = quiz.locator(selector);
@@ -136,7 +136,7 @@ test("quiz controls reflow at narrow width and browser zoom", async ({ page }) =
   const dimensions = await quiz.evaluate((node) => ({ width: node.getBoundingClientRect().width, viewport: innerWidth }));
   expect(dimensions.width).toBeLessThanOrEqual(dimensions.viewport);
   await page.evaluate(() => { document.body.style.zoom = "200%"; });
-  await expect(quiz.getByRole("button", { name: "Corriger" })).toBeVisible();
+  await expect(quiz.getByRole("button", { name: "Check answers" })).toBeVisible();
   const focused = quiz.getByRole("textbox").first();
   await focused.focus();
   await expect(focused).toHaveCSS("outline-style", "solid");

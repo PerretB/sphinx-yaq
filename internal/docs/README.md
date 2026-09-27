@@ -1,4 +1,7 @@
-# Documentation
+# Internal engineering documentation
+
+These records are for maintainers and are excluded from the public Sphinx site.
+The public user documentation is in [../../docs](../../docs/index.rst).
 
 For the current package, use the [authoring and usage guide](usage_guide.md),
 [legacy migration guide](migrating_from_legacy.md),

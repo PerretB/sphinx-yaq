@@ -1,6 +1,6 @@
 # Migration batch index
 
-These files split `docs/migration_plan.md` into reviewable implementation contracts. Execute them in order unless the migration status explicitly documents a justified deviation.
+These files split `internal/docs/migration_plan.md` into reviewable implementation contracts. Execute them in order unless the migration status explicitly documents a justified deviation.
 
 Execute every batch in the target repository, `D:\sphinx-yaq`. Use `C:\Users\perre\Dropbox\cours\demoSphinx` only as the legacy source and behavioral oracle. Copy required material into the target; do not perform the refactoring in the legacy directory.
 

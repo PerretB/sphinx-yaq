@@ -50,5 +50,5 @@ Search generated HTML and package assets for removed dependencies, remote extens
 
 ## Suggested Codex prompt
 
-> Implement Batch 06 from `docs/migration_batches/06-dependency-security.md`. Remove all listed legacy browser dependencies and replace unsafe string-built DOM with standard DOM APIs. Preserve grading, state, and persistence behavior. Add escaping and CSP-oriented tests, run all validations, and update `docs/migration_status.md`.
+> Implement Batch 06 from `internal/docs/migration_batches/06-dependency-security.md`. Remove all listed legacy browser dependencies and replace unsafe string-built DOM with standard DOM APIs. Preserve grading, state, and persistence behavior. Add escaping and CSP-oriented tests, run all validations, and update `internal/docs/migration_status.md`.
 

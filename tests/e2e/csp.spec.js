@@ -16,7 +16,7 @@ test("quiz works under same-origin CSP and renders model strings as text", async
   await expect(page.locator(".yaq-spoiler-inline")).not.toHaveClass(/yaq-spoiler-inline-hidden/);
   await page.locator(".yaq-FBQuestion select").selectOption("safe");
   await page.locator(".yaq-FBQuestion input").fill("2");
-  await page.getByRole("button", { name: "Corriger" }).click();
+  await page.getByRole("button", { name: "Check answers" }).click();
   await expect(page.locator('[data-role="correctMarker"]')).toHaveCount(2);
   await expect(page.locator('[data-role="correctMarker"]').first()).toBeVisible();
   await expect(page.locator('[data-role="correctMarker"]').last()).toBeVisible();
