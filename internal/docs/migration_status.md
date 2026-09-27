@@ -819,3 +819,34 @@ Validation for this documentation update:
   reported the existing `NO_COLOR`/`FORCE_COLOR` warning. No tests were skipped.
 - No hosted Read the Docs build or deployment was performed. The repository
   configuration is ready for import into Read the Docs.
+
+## Read the Docs parallel-build correction
+
+The extension's setup metadata still declared parallel reading and writing
+unsafe. Read the Docs' parallel build emitted fallback warnings, causing the
+warnings-as-errors build to fail. Both safety flags are now true: parser state
+is document-local, visitors write only to their own HTML translator, and no
+extension state is stored on the shared build environment. Asset registration
+happens during setup, before workers run. Authoring and grading are unchanged.
+
+Added regression coverage for Sphinx's safety checks and real serial/parallel
+builds of nine pages. The integration test verifies distinct worker process
+IDs, identical HTML and packaged assets, reuse of quiz identifiers across
+documents, all three question types, both spoiler forms, and cached rebuilds.
+CI now builds public documentation with `-j 2` and warnings treated as errors.
+
+Validation:
+
+- Before the fix, the safety regression reproduced the reported warnings.
+- Windows, Python 3.12 / Sphinx 9.1.0: 27 Python tests passed; the fork-based
+  integration test was skipped because Sphinx cannot run workers on Windows.
+- WSL Ubuntu, Python 3.10 / Sphinx 8.1.3: all 28 Python tests passed, including
+  actual parallel worker execution. Public docs built with `-W --keep-going
+  -E -j 2 -b html` without warnings.
+- Windows public docs build with Sphinx 9.1.0: passed without warnings.
+- JavaScript suite: 114 tests passed; packaged bundle current.
+- Ruff lint/format checks and `git diff --check`: passed.
+
+No hosted Read the Docs rebuild was triggered. Next action is to publish these
+changes through the normal repository workflow and rebuild the selected RTD
+revision. Existing comparison/release batch blockers remain unchanged.
