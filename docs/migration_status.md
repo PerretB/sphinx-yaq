@@ -2,6 +2,35 @@
 
 Last updated: 2026-09-27
 
+## Exercise title escaping follow-up
+
+- Removed redundant HTML escaping of quiz titles before JSON serialization.
+  Docutils still escapes the HTML attribute and the runtime uses textContent,
+  preserving apostrophes, quotes, ampersands, markup-like text, and literal
+  entities without interpreting author titles as HTML.
+- Updated the Sphinx emission regression with `Hiérarchie d'héritage` and
+  punctuation; it failed before the fix. Added a runtime title regression and
+  corrected the JS fixture helper to escape its JSON attribute like Sphinx.
+- Validation: 114 JavaScript tests, 26 Python/Sphinx tests, and 6 browser tests
+  passed; the demo rebuilt with warnings treated as errors. Browser tests
+  passed after starting the local server (the initial attempt found no server),
+  with only the NO_COLOR/FORCE_COLOR environment warning.
+- No batch status changed; Batch 08B and 08C remain next.
+
+## Unanswered correction follow-up
+
+- Removed the unanswered question mark marker and its transient runtime state.
+  Clicking Correct retains the existing blink for blank fill-in, single-choice,
+  and true/false controls, along with live unanswered-count announcements.
+- Updated the feedback characterization contract and browser checks, including
+  repeated correction of unanswered controls. The new browser test first failed
+  on the old question mark behavior.
+- Rebuilt the packaged JavaScript and demo with Sphinx warnings treated as errors.
+  Validation: 113 JavaScript tests, 26 Python/Sphinx tests, and all 6 browser
+  tests passed. Browser tests reused the running test server after the managed
+  launch stalled; only the NO_COLOR/FORCE_COLOR environment warning was emitted.
+  No migration batch status changed; Batch 08B and 08C remain next.
+
 ## True/false correction follow-up
 
 - Restored the legacy terminal behavior for wrong TF answers at the user's

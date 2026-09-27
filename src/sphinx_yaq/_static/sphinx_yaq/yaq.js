@@ -964,8 +964,6 @@
         this.__wrongMarker = void 0;
         this.__correctMarker = void 0;
         this.__infoMarker = void 0;
-        this.__unansweredMarker = void 0;
-        this.__gradedUnanswered = false;
         this.__onChange = onChange || function() {
         };
         this.__updateEnabled = function() {
@@ -978,26 +976,21 @@
             this.__wrongMarker.classList.add("yaq-hidden");
             this.__correctMarker.classList.add("yaq-hidden");
             this.__infoMarker.classList.add("yaq-hidden");
-            this.__unansweredMarker.classList.toggle("yaq-hidden", !this.__gradedUnanswered);
           } else if (this.model.state & QuestionState.correct) {
-            this.__unansweredMarker.classList.add("yaq-hidden");
             this.__wrongMarker.classList.add("yaq-hidden");
             this.__correctMarker.classList.remove("yaq-hidden");
             this.__infoMarker.classList.add("yaq-hidden");
           } else if (this.model.state & QuestionState.wrong) {
-            this.__unansweredMarker.classList.add("yaq-hidden");
             this.__wrongMarker.classList.remove("yaq-hidden");
             this.__correctMarker.classList.add("yaq-hidden");
             this.__infoMarker.classList.add("yaq-hidden");
           } else if (this.model.state & QuestionState.solved) {
-            this.__unansweredMarker.classList.add("yaq-hidden");
             this.__wrongMarker.classList.add("yaq-hidden");
             this.__correctMarker.classList.add("yaq-hidden");
             this.__infoMarker.classList.remove("yaq-hidden");
           }
         };
         this.__innerChanged = function() {
-          this.__gradedUnanswered = false;
           this.model.innerModel = this.__innerQuestion.getModel();
           this.__updateState();
           this.__onChange();
@@ -1031,16 +1024,13 @@
           this.__wrongMarker = createFeedbackMarker("yaq-wrong-marker", "wrongMarker", "✘", "Incorrect");
           this.__correctMarker = createFeedbackMarker("yaq-correct-marker", "correctMarker", "✔", "Correct");
           this.__infoMarker = createFeedbackMarker("yaq-solution-marker", "solutionMarker", "ⓘ", "Solution shown");
-          this.__unansweredMarker = createFeedbackMarker("yaq-unanswered-marker", "unansweredMarker", "?", "Unanswered");
           root.append(this.__wrongMarker);
           root.append(this.__correctMarker);
           root.append(this.__infoMarker);
-          root.append(this.__unansweredMarker);
           this.__updateEnabled();
           this.__updateState();
         };
         this.reset = function() {
-          this.__gradedUnanswered = false;
           this.__innerQuestion.reset();
           this.model.enabled = true;
           this.__updateState();
@@ -1067,7 +1057,6 @@
         };
         this.grade = function() {
           this.__innerQuestion.grade();
-          this.__gradedUnanswered = this.__innerQuestion.getModel().state === QuestionState.unsolved;
           this.__updateState();
         };
         this.solve = function() {

@@ -86,9 +86,9 @@ def quiz_question(
 
 
 def visit_quiz_node(self, node: Quiz) -> None:
-    # Keep the serialized author strings inert before the browser renders them.
+    # starttag escapes the JSON attribute; the runtime renders the title as text.
     model = {
-        "title": html.escape(node["title"], quote=True),
+        "title": node["title"],
         "uid": html.escape(node["uid"], quote=True),
     }
     self.body.append(self.starttag(node, "div", "", CLASS="yaq", **{"data-model": _json(model)}))

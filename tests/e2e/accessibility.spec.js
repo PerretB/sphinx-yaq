@@ -60,7 +60,8 @@ test("quiz and spoilers work by keyboard with named controls and announced feedb
   await expect(status).toContainText("Grading complete:");
   await expect(quiz.locator('[data-role="correctMarker"]:visible').first()).toContainText("Correct");
   await expect(quiz.locator('[data-role="wrongMarker"]:visible').first()).toContainText("Incorrect");
-  await expect(quiz.locator('[data-role="unansweredMarker"]:visible').first()).toContainText("Unanswered");
+  await expect(quiz.locator('[data-role="unansweredMarker"]:visible')).toHaveCount(0);
+  await expect(quiz.getByRole("textbox").nth(1)).toHaveClass(/yaq-blink/);
   await expectIconFeedback(quiz.locator('[data-role="correctMarker"]:visible').first(), "Correct");
   await expectIconFeedback(quiz.locator('[data-role="wrongMarker"]:visible').first(), "Incorrect");
   await checkQuizAxe(page);
@@ -107,6 +108,23 @@ test("quiz and spoilers work by keyboard with named controls and announced feedb
   await disclosure.focus();
   await page.keyboard.press("Enter");
   await expect(disclosure.locator("..")).toHaveAttribute("open", "");
+});
+
+test("correcting unanswered questions only blinks their controls", async ({ page }) => {
+  await page.goto("/quiz/");
+  const quiz = page.locator(".yaq-root").first();
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await quiz.getByRole("button", { name: "Corriger" }).click();
+    await expect(quiz.locator('[data-role="unansweredMarker"]:visible')).toHaveCount(0);
+    for (const selector of ["input", "select", ".yaq-switch3"]) {
+      const controls = quiz.locator(selector);
+      expect(await controls.count()).toBeGreaterThan(0);
+      for (const control of await controls.all()) {
+        await expect(control).toHaveClass(/yaq-blink/);
+      }
+    }
+    await expect(quiz.getByRole("status")).toContainText("unanswered");
+  }
 });
 
 test("quiz controls reflow at narrow width and browser zoom", async ({ page }) => {

@@ -686,8 +686,6 @@ var yaq_app= (function(){
 			this.__wrongMarker = undefined;
 			this.__correctMarker = undefined;
 			this.__infoMarker = undefined;
-			this.__unansweredMarker = undefined;
-			this.__gradedUnanswered = false;
 			this.__onChange = onChange || function() {};
 			
 			this.__updateEnabled = function(){
@@ -701,19 +699,15 @@ var yaq_app= (function(){
 					this.__wrongMarker.classList.add('yaq-hidden');
 					this.__correctMarker.classList.add('yaq-hidden');
 					this.__infoMarker.classList.add('yaq-hidden');
-					this.__unansweredMarker.classList.toggle('yaq-hidden', !this.__gradedUnanswered);
 				} else if (this.model.state & QuestionStateEnum.correct){
-					this.__unansweredMarker.classList.add('yaq-hidden');
 					this.__wrongMarker.classList.add('yaq-hidden');
 					this.__correctMarker.classList.remove('yaq-hidden');
 					this.__infoMarker.classList.add('yaq-hidden');
 				}else if (this.model.state & QuestionStateEnum.wrong){
-					this.__unansweredMarker.classList.add('yaq-hidden');
 					this.__wrongMarker.classList.remove('yaq-hidden');
 					this.__correctMarker.classList.add('yaq-hidden');
 					this.__infoMarker.classList.add('yaq-hidden');
 				} else if (this.model.state &  QuestionStateEnum.solved){
-					this.__unansweredMarker.classList.add('yaq-hidden');
 					this.__wrongMarker.classList.add('yaq-hidden');
 					this.__correctMarker.classList.add('yaq-hidden');
 					this.__infoMarker.classList.remove('yaq-hidden');
@@ -721,7 +715,6 @@ var yaq_app= (function(){
 			};
 
 			this.__innerChanged = function(){
-				this.__gradedUnanswered = false;
 				this.model.innerModel = this.__innerQuestion.getModel();
 				this.__updateState();
 				this.__onChange();
@@ -762,18 +755,15 @@ var yaq_app= (function(){
 				this.__wrongMarker = createFeedbackMarker("yaq-wrong-marker", "wrongMarker", "✘", "Incorrect");
 				this.__correctMarker = createFeedbackMarker("yaq-correct-marker", "correctMarker", "✔", "Correct");
 				this.__infoMarker = createFeedbackMarker("yaq-solution-marker", "solutionMarker", "ⓘ", "Solution shown");
-				this.__unansweredMarker = createFeedbackMarker("yaq-unanswered-marker", "unansweredMarker", "?", "Unanswered");
 				root.append(this.__wrongMarker);
 				root.append(this.__correctMarker);
 				root.append(this.__infoMarker);
-				root.append(this.__unansweredMarker);
 					
 				this.__updateEnabled();
 				this.__updateState();
 			};
 			
 			this.reset = function(){
-				this.__gradedUnanswered = false;
 				this.__innerQuestion.reset();
 				this.model.enabled=true;
 				this.__updateState();
@@ -798,7 +788,6 @@ var yaq_app= (function(){
 			
 			this.grade = function(){
 				this.__innerQuestion.grade();
-				this.__gradedUnanswered = this.__innerQuestion.getModel().state === QuestionStateEnum.unsolved;
 				this.__updateState();
 			};
 			

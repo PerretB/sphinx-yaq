@@ -30,7 +30,12 @@ export function quizMarkup({
     )
     .join("");
 
-  return `<div class="yaq" data-model='${JSON.stringify({ title, uid })}'>${fields}</div>`;
+  const model = JSON.stringify({ title, uid })
+    .replaceAll("&", "&amp;")
+    .replaceAll("'", "&#39;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+  return `<div class="yaq" data-model='${model}'>${fields}</div>`;
 }
 
 export async function settle(window, cycles = 8) {
