@@ -6,6 +6,30 @@ async function checkQuizAxe(page) {
   expect(results.violations.filter((violation) => ["critical", "serious"].includes(violation.impact))).toEqual([]);
 }
 
+async function expectIconFeedback(marker, label) {
+  await expect(marker).toHaveAttribute("title", label);
+  await expect(marker.locator(".yaq-feedback-text")).toHaveCSS("position", "absolute");
+  await expect(marker.locator(".yaq-feedback-text")).toHaveCSS("clip", "rect(0px, 0px, 0px, 0px)");
+  await expect(marker.locator('[aria-hidden="true"]')).toBeVisible();
+}
+
+test("YAQ styles take precedence over later theme rules", async ({ page }) => {
+  await page.goto("/quiz/");
+  await page.addStyleTag({ content: `
+    div.body h2 { color: red; font-size: 48px; padding: 30px; }
+    div.body button { background-color: red; padding: 30px; }
+    div.body span { font-weight: 400; }
+    div.body summary { color: red; padding: 30px; }
+  ` });
+  const quiz = page.locator(".yaq-root").first();
+  await expect(quiz.locator(".yaq-head")).toHaveCSS("color", "rgb(255, 255, 255)");
+  await expect(quiz.locator(".yaq-head")).toHaveCSS("padding", "5px 10px");
+  await expect(quiz.getByRole("button", { name: "Corriger" })).toHaveCSS("background-color", "rgb(56, 109, 153)");
+  await expect(quiz.getByRole("button", { name: "Corriger" })).toHaveCSS("padding", "5px 10px");
+  await expect(page.locator(".yaq-spoiler-block-title").first()).toHaveCSS("color", "rgb(255, 255, 255)");
+  await expect(page.locator(".yaq-spoiler-block-title").first()).toHaveCSS("padding", "5px 10px");
+});
+
 test("quiz and spoilers work by keyboard with named controls and announced feedback", async ({ page }) => {
   await page.goto("/quiz/");
   const quiz = page.locator(".yaq-root").first();
@@ -37,6 +61,8 @@ test("quiz and spoilers work by keyboard with named controls and announced feedb
   await expect(quiz.locator('[data-role="correctMarker"]:visible').first()).toContainText("Correct");
   await expect(quiz.locator('[data-role="wrongMarker"]:visible').first()).toContainText("Incorrect");
   await expect(quiz.locator('[data-role="unansweredMarker"]:visible').first()).toContainText("Unanswered");
+  await expectIconFeedback(quiz.locator('[data-role="correctMarker"]:visible').first(), "Correct");
+  await expectIconFeedback(quiz.locator('[data-role="wrongMarker"]:visible').first(), "Incorrect");
   await checkQuizAxe(page);
 
   const remaining = quiz.getByRole("textbox");
@@ -52,6 +78,7 @@ test("quiz and spoilers work by keyboard with named controls and announced feedb
   await page.keyboard.press("Enter");
   await expect(status).toContainText("Solutions shown:");
   await expect(quiz.locator('[data-role="solutionMarker"]:visible').first()).toContainText("Solution shown");
+  await expectIconFeedback(quiz.locator('[data-role="solutionMarker"]:visible').first(), "Solution shown");
   await expect(trueButton).toHaveAttribute("aria-pressed", "true");
   await expect(trueButton).toBeDisabled();
   await restart.focus();

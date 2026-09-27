@@ -490,7 +490,7 @@
       marker.title = label;
       const icon = createElement("span", null, symbol);
       icon.setAttribute("aria-hidden", "true");
-      marker.append(icon, createElement("span", "yaq-feedback-text", " " + label));
+      marker.append(icon, createElement("span", "yaq-feedback-text yaq-visually-hidden", " " + label));
       return marker;
     }
     function questionContext(element, index) {

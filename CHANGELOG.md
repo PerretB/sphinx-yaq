@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## 0.1.0 - Unreleased
 
+- Show question status as icons with tooltips, retaining visually hidden labels
+  and live announcements for screen readers. Increase quiz and spoiler CSS
+  specificity so theme rules such as Alabaster's `div.body h2` do not override
+  YAQ styling, even when loaded later.
 - Document the non-drop-in migration from copied `Sphinx_ext` installations,
   including stricter author diagnostics, grading changes, and progress reset.
 - Declare Python 3.14 support with Sphinx 8.2 or 9 and add a tag-driven,

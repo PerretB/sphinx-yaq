@@ -1,6 +1,21 @@
 # YAQ migration status
 
-Last updated: 2026-09-26
+Last updated: 2026-09-27
+
+## Rendering follow-up
+
+- Question feedback now displays only the icon and its tooltip; labels remain
+  visually hidden for screen readers and live quiz announcements are retained.
+  This intentionally replaces Batch 07's visible question status text.
+- Quiz and spoiler CSS selectors use `:root` document scope to outrank theme
+  selectors such as `div.body h2`, including theme rules loaded afterward.
+- Rebuilt the packaged JavaScript and Alabaster demo. Validation: 109 JavaScript
+  tests, 26 Python/Sphinx tests, and all 5 browser tests passed, including new
+  icon-feedback and theme-specificity regression checks. Browser tests reused
+  the test server after the initial managed-server invocation stalled; the
+  runner emitted only a NO_COLOR/FORCE_COLOR environment warning.
+- No migration batch status changed. The next planned work remains Batch 08B
+  and 08C; neither was started by this rendering follow-up.
 
 ## Overall state
 
