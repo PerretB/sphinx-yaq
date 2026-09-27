@@ -26,6 +26,14 @@ describe("question transitions", () => {
     });
   });
 
+  it("makes a wrong binary answer terminal while retaining incorrect feedback", () => {
+    expect(gradeAnswer(initial, { answered: true, correct: false, retryable: false })).toEqual({
+      ...initial,
+      enabled: false,
+      state: QuestionState.wrong | QuestionState.solved,
+    });
+  });
+
   it("disables correct and revealed answers while distinguishing their states", () => {
     expect(gradeAnswer(initial, { answered: true, correct: true })).toEqual({
       ...initial,

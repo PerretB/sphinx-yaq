@@ -208,14 +208,18 @@
   function answerChanged(model) {
     return { ...model, state: QuestionState.unsolved };
   }
-  function gradeAnswer(model, { answered, correct }) {
+  function gradeAnswer(model, { answered, correct, retryable = true }) {
     if (!answered) {
       return { ...model, state: QuestionState.unsolved };
     }
     if (correct) {
       return { ...model, enabled: false, state: QuestionState.correct };
     }
-    return { ...model, enabled: true, state: QuestionState.wrong };
+    return {
+      ...model,
+      enabled: retryable,
+      state: retryable ? QuestionState.wrong : QuestionState.wrong | QuestionState.solved
+    };
   }
   function revealAnswer(model) {
     return { ...model, enabled: false, state: QuestionState.solved };
@@ -907,8 +911,8 @@
           };
         };
         this.restore = function(state) {
-          if (!state || state.type !== "TF" || typeof state.enabled !== "boolean" || !isQuestionState(state.state) || ![0, 1, 2].includes(state.selectedIndex)) return false;
-          this.model = { enabled: state.enabled, state: state.state };
+          if (!state || state.type !== "TF" || typeof state.enabled !== "boolean" || !(isQuestionState(state.state) || state.state === (QuestionState.wrong | QuestionState.solved)) || ![0, 1, 2].includes(state.selectedIndex)) return false;
+          this.model = state.state & QuestionState.wrong ? gradeAnswer({}, { answered: true, correct: false, retryable: false }) : { enabled: state.enabled, state: state.state };
           this.__switch3.setSelectedIndex(state.selectedIndex);
           this.render();
           return true;
@@ -925,7 +929,7 @@
           } else if (gans === cans) {
             this.model = gradeAnswer(this.model, { answered: true, correct: true });
           } else {
-            this.model = gradeAnswer(this.model, { answered: true, correct: false });
+            this.model = gradeAnswer(this.model, { answered: true, correct: false, retryable: false });
           }
           this.render();
           this.__onChange();
@@ -1213,7 +1217,7 @@
         this.__announce = function(action) {
           const states = this.__activity.__questions.map((question) => question.getModel().state);
           const count = (state) => states.filter((value) => value === state).length;
-          this.__statusText.textContent = action + ": " + count(QuestionState.correct) + " correct, " + count(QuestionState.wrong) + " incorrect, " + count(QuestionState.unsolved) + " unanswered, " + count(QuestionState.solved) + " solution shown.";
+          this.__statusText.textContent = action + ": " + count(QuestionState.correct) + " correct, " + states.filter((state) => state & QuestionState.wrong).length + " incorrect, " + count(QuestionState.unsolved) + " unanswered, " + count(QuestionState.solved) + " solution shown.";
         };
         this.__updateEnabled = function() {
           [this.__buttonGrade, this.__buttonReset, this.__buttonSolve].forEach((button) => {

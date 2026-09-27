@@ -2,6 +2,23 @@
 
 Last updated: 2026-09-27
 
+## True/false correction follow-up
+
+- Restored the legacy terminal behavior for wrong TF answers at the user's
+  request, superseding Batch 04's retry/reveal decision. Correction preserves
+  the selected wrong choice and incorrect feedback, disables the switch, and
+  counts the question as finished. Restart clears it; showing solutions for
+  other questions leaves it unchanged.
+- Saved terminal TF answers restore correctly. Wrong TF progress saved under
+  the previous retry policy is normalized to the restored terminal behavior.
+- Fill-in and single-choice retry behavior is unchanged. No migration batch
+  status changed; Batch 08B and 08C remain the next planned work.
+- Validation: 113 JavaScript tests, 26 Python/Sphinx tests, and all 5 browser
+  tests passed. Rebuilt the packaged bundle and demo with Sphinx warnings
+  treated as errors. Browser tests reused the running test server after the
+  managed-server invocation stalled; only the NO_COLOR/FORCE_COLOR environment
+  warning was emitted. No package/release build was needed for this runtime fix.
+
 ## Rendering follow-up
 
 - Question feedback now displays only the icon and its tooltip; labels remain
