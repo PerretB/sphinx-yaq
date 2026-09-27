@@ -21,6 +21,7 @@ export function encodeQuestion(model) {
 export function quizMarkup({
   uid = "quiz-1",
   title = "Fixture quiz",
+  i18n,
   questions,
 }) {
   const fields = questions
@@ -35,7 +36,9 @@ export function quizMarkup({
     .replaceAll("'", "&#39;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");
-  return `<div class="yaq" data-model='${model}'>${fields}</div>`;
+  const locale = JSON.stringify(i18n || {})
+    .replaceAll("&", "&amp;").replaceAll("'", "&#39;").replaceAll("<", "&lt;");
+  return `<div class="yaq" data-model='${model}' data-i18n='${locale}'>${fields}</div>`;
 }
 
 export async function settle(window, cycles = 8) {

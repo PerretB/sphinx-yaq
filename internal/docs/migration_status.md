@@ -2,6 +2,52 @@
 
 Last updated: 2026-09-27
 
+## Interface internationalization follow-up
+
+- Added shared, packaged English and French JSON catalogs under
+  `src/sphinx_yaq/locales/`, with per-quiz translators in the browser. Buttons,
+  feedback tooltips, headings, accessible labels, status counts, inline spoiler
+  labels, fallback messages, and learner-facing math errors use catalog entries.
+- Language precedence is quiz `:language:`, document `:yaq-language:` metadata,
+  `yaq_language` in `conf.py`, Sphinx `language`, then English. Regional codes
+  fall back to their supported base language; unsupported values warn and use
+  English. Source document identity survives singlehtml tree assembly. No
+  mutable shared locale is introduced into Sphinx or the runtime.
+- Translation data is emitted separately from question models. Grading,
+  canonical T/F answers, storage keys, and definition fingerprints are unchanged.
+  A real-browser test verifies compatible progress survives a UI language change.
+- Intentional compatibility changes: projects with Sphinx `language = "fr"`
+  now get French controls (set `yaq_language = "en"` to retain English); English
+  solution counts now pluralize correctly; learner-facing math messages no
+  longer append untranslated library exception text.
+- Added public `docs/internationalization.rst`, a bilingual demo, catalog
+  completeness/placeholder tests, precedence/fallback/escaping tests, mixed-page
+  runtime tests, singlehtml and cached-build checks, and bilingual parallel
+  regression coverage. Updated package-data and installed-wheel verification.
+
+Validation:
+
+- JavaScript: `npm run test:js` passed all 119 tests; source coverage thresholds
+  passed, including the new translation module. Bundle rebuilt and current;
+  `npm run check:syntax` passed.
+- Windows Python 3.12 / Sphinx 9.1.0: 40 tests passed, with the fork-only parallel
+  regression skipped on Windows. No Sphinx warnings.
+- WSL Python 3.10 / Sphinx 8.1.3: all 14 targeted i18n and parallel tests passed,
+  including actual worker processes and cached serial/parallel output equality.
+  Pytest emitted one cache-write permission warning on the Windows-mounted
+  `.pytest_cache`; no test was skipped and no Sphinx warning occurred.
+- Seven Chromium browser tests passed, including keyboard/axe, CSP, bilingual
+  controls, spoiler language inheritance, and persistence. Only the existing
+  `NO_COLOR`/`FORCE_COLOR` environment warning was emitted.
+- Demo and public documentation built with `-W -E` without warnings.
+- Wheel and sdist built; clean installed-wheel smoke test passed with Sphinx
+  9.1.0 and French catalog emission. Isolated build initially could not fetch
+  setuptools in the sandbox; it passed with network access enabled.
+- Ruff lint/format checks and the repository's normal `git diff --check` passed.
+
+No commit or release was made. No migration batch status changed; the next
+planned work remains Batch 08B and 08C, with existing release blockers intact.
+
 ## Exercise title escaping follow-up
 
 - Removed redundant HTML escaping of quiz titles before JSON serialization.

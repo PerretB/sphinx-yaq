@@ -220,11 +220,13 @@ is ignored when its schema or fingerprint no longer matches the page.
 
 ## 5. Configuration and accessibility
 
-Enable `sphinx_yaq` in `conf.py`; there are no extension-specific Sphinx
-configuration settings. The runtime's UI strings live in
-`frontend/src/runtime.js` in the `texts` object. Developers changing them must
-rebuild the packaged bundle with `npm run build:js`; editing the generated
-`src/sphinx_yaq/_static/sphinx_yaq/yaq.js` directly is unsupported.
+Enable `sphinx_yaq` in `conf.py`. UI language follows Sphinx's `language`, with
+optional overrides through `yaq_language`, document `:yaq-language:` metadata,
+and quiz `:language:`. English and French catalogs are shared JSON files under
+`src/sphinx_yaq/locales/`. See the public
+[language guide](../../docs/internationalization.rst). Developers changing
+catalogs must rebuild the packaged bundle with `npm run build:js`; editing
+generated JavaScript directly is unsupported.
 
 Quiz controls have accessible names, visible feedback text, keyboard operation,
 and a polite status announcement. Inline spoilers use buttons and block spoilers

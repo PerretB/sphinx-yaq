@@ -45,7 +45,9 @@ def setup(app):
     )
     for index, page in enumerate(pages):
         (source / f"{page}.rst").write_text(
-            f'''Quiz {index}
+            f''':yaq-language: {"fr" if index % 2 else "en"}
+
+Quiz {index}
 ======
 
 .. quiz:: shared-id
@@ -94,7 +96,8 @@ Outside the quiz: :spoiler:`Answer {index}`.
             if page != "index":
                 assert actual.count('class="yaq-q"') == 3
                 assert '<details class="yaq-spoiler-block">' in actual
-                assert 'aria-label="Show hidden text"' in actual
+                label = "Afficher le texte masqué" if pages.index(page) % 2 else "Show hidden text"
+                assert f'aria-label="{label}"' in actual
         for asset in ("yaq.js", "math.js", "css/yaq.css"):
             path = Path("_static/sphinx_yaq") / asset
             assert (parallel / path).read_bytes() == (serial / path).read_bytes()

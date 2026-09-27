@@ -9,6 +9,7 @@ export default defineConfig({
         "frontend/src/grading.js",
         "frontend/src/model.js",
         "frontend/src/storage.js",
+        "frontend/src/i18n.js",
       ],
       thresholds: {
         statements: 90,

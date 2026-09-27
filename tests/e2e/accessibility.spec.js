@@ -24,8 +24,8 @@ test("YAQ styles take precedence over later theme rules", async ({ page }) => {
   const quiz = page.locator(".yaq-root").first();
   await expect(quiz.locator(".yaq-head")).toHaveCSS("color", "rgb(255, 255, 255)");
   await expect(quiz.locator(".yaq-head")).toHaveCSS("padding", "5px 10px");
-  await expect(quiz.getByRole("button", { name: "Check answers" })).toHaveCSS("background-color", "rgb(56, 109, 153)");
-  await expect(quiz.getByRole("button", { name: "Check answers" })).toHaveCSS("padding", "5px 10px");
+  await expect(quiz.getByRole("button", { name: "Vérifier les réponses" })).toHaveCSS("background-color", "rgb(56, 109, 153)");
+  await expect(quiz.getByRole("button", { name: "Vérifier les réponses" })).toHaveCSS("padding", "5px 10px");
   await expect(page.locator(".yaq-spoiler-block-title").first()).toHaveCSS("color", "rgb(255, 255, 255)");
   await expect(page.locator(".yaq-spoiler-block-title").first()).toHaveCSS("padding", "5px 10px");
 });
@@ -35,11 +35,11 @@ test("quiz and spoilers work by keyboard with named controls and announced feedb
   const quiz = page.locator(".yaq-root").first();
   const answer = quiz.getByRole("textbox").first();
   const truth = quiz.getByRole("group", { name: /Question .*URSS/ });
-  const trueButton = truth.getByRole("button", { name: "True" });
-  const falseButton = truth.getByRole("button", { name: "False" });
-  const grade = quiz.getByRole("button", { name: "Check answers" });
-  const reveal = quiz.getByRole("button", { name: "Show solution" });
-  const restart = quiz.getByRole("button", { name: "Restart" });
+  const trueButton = truth.getByRole("button", { name: "Vrai" });
+  const falseButton = truth.getByRole("button", { name: "Faux" });
+  const grade = quiz.getByRole("button", { name: "Vérifier les réponses" });
+  const reveal = quiz.getByRole("button", { name: "Afficher la solution" });
+  const restart = quiz.getByRole("button", { name: "Recommencer" });
   const status = quiz.getByRole("status");
 
   await expect(answer).toHaveAccessibleName(/Question 1.*Yalta/);
@@ -51,13 +51,13 @@ test("quiz and spoilers work by keyboard with named controls and announced feedb
   await page.keyboard.type("Yalta");
   await trueButton.focus();
   await page.keyboard.press("Tab");
-  await expect(truth.getByRole("button", { name: "Unanswered" })).toBeFocused();
+  await expect(truth.getByRole("button", { name: "Sans réponse" })).toBeFocused();
   await falseButton.focus();
   await page.keyboard.press("Space");
   await expect(falseButton).toHaveAttribute("aria-pressed", "true");
   await grade.focus();
   await page.keyboard.press("Enter");
-  await expect(status).toContainText("Grading complete:");
+  await expect(status).toContainText("Vérification terminée :");
   await expect(quiz.locator('[data-role="correctMarker"]:visible').first()).toContainText("Correct");
   await expect(quiz.locator('[data-role="wrongMarker"]:visible').first()).toContainText("Incorrect");
   await expect(quiz.locator('[data-role="unansweredMarker"]:visible')).toHaveCount(0);
@@ -68,7 +68,7 @@ test("quiz and spoilers work by keyboard with named controls and announced feedb
 
   await expect(falseButton).toBeDisabled();
   await expect(trueButton).toBeDisabled();
-  await expect(status).toContainText("1 incorrect");
+  await expect(status).toContainText("1 réponse incorrecte");
   await page.reload();
   await expect(falseButton).toHaveAttribute("aria-pressed", "true");
   await expect(falseButton).toBeDisabled();
@@ -86,20 +86,20 @@ test("quiz and spoilers work by keyboard with named controls and announced feedb
 
   await reveal.focus();
   await page.keyboard.press("Enter");
-  await expect(status).toContainText("Solutions shown:");
-  await expect(quiz.locator('[data-role="solutionMarker"]:visible').first()).toContainText("Solution shown");
-  await expectIconFeedback(quiz.locator('[data-role="solutionMarker"]:visible').first(), "Solution shown");
+  await expect(status).toContainText("Solutions affichées :");
+  await expect(quiz.locator('[data-role="solutionMarker"]:visible').first()).toContainText("Solution affichée");
+  await expectIconFeedback(quiz.locator('[data-role="solutionMarker"]:visible').first(), "Solution affichée");
   await expect(falseButton).toHaveAttribute("aria-pressed", "true");
   await expect(trueButton).toBeDisabled();
   await restart.focus();
   await page.keyboard.press("Enter");
-  await expect(status).toContainText("Quiz restarted:");
+  await expect(status).toContainText("Exercice recommencé :");
   await expect(answer).toHaveValue("");
   await expect(trueButton).toBeEnabled();
   await checkQuizAxe(page);
 
   const spoiler = page.locator(".yaq-spoiler-inline").first();
-  await expect(spoiler).toHaveAccessibleName("Show hidden text");
+  await expect(spoiler).toHaveAccessibleName("Afficher le texte masqué");
   await spoiler.focus();
   await page.keyboard.press("Enter");
   await expect(spoiler).not.toHaveClass(/yaq-spoiler-inline-hidden/);
@@ -114,7 +114,7 @@ test("correcting unanswered questions only blinks their controls", async ({ page
   await page.goto("/quiz/");
   const quiz = page.locator(".yaq-root").first();
   for (let attempt = 0; attempt < 2; attempt++) {
-    await quiz.getByRole("button", { name: "Check answers" }).click();
+    await quiz.getByRole("button", { name: "Vérifier les réponses" }).click();
     await expect(quiz.locator('[data-role="unansweredMarker"]:visible')).toHaveCount(0);
     for (const selector of ["input", "select", ".yaq-switch3"]) {
       const controls = quiz.locator(selector);
@@ -123,7 +123,7 @@ test("correcting unanswered questions only blinks their controls", async ({ page
         await expect(control).toHaveClass(/yaq-blink/);
       }
     }
-    await expect(quiz.getByRole("status")).toContainText("unanswered");
+    await expect(quiz.getByRole("status")).toContainText("sans réponse");
   }
 });
 
@@ -136,7 +136,7 @@ test("quiz controls reflow at narrow width and browser zoom", async ({ page }) =
   const dimensions = await quiz.evaluate((node) => ({ width: node.getBoundingClientRect().width, viewport: innerWidth }));
   expect(dimensions.width).toBeLessThanOrEqual(dimensions.viewport);
   await page.evaluate(() => { document.body.style.zoom = "200%"; });
-  await expect(quiz.getByRole("button", { name: "Check answers" })).toBeVisible();
+  await expect(quiz.getByRole("button", { name: "Vérifier les réponses" })).toBeVisible();
   const focused = quiz.getByRole("textbox").first();
   await focused.focus();
   await expect(focused).toHaveCSS("outline-style", "solid");

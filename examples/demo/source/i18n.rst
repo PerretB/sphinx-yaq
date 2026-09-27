@@ -1,0 +1,26 @@
+:yaq-language: fr
+
+Langues de l’interface
+=========================
+
+Les messages de cette page sont en français. Le second exercice utilise
+explicitement l’anglais. Indice : :spoiler:`La réponse est Paris.`
+
+.. quiz:: french
+   :title: Capitales
+
+   La capitale de la France est :quiz:`{"type":"FB","answer":"Paris"}`.
+
+   Paris est en France : :quiz:`{"type":"TF","answer":"T"}`.
+
+   Indice : :spoiler:`Pensez à la tour Eiffel.`
+
+.. quiz:: english
+   :title: Capitals
+   :language: en
+
+   The capital of France is :quiz:`{"type":"FB","answer":"Paris"}`.
+
+   Paris is in France: :quiz:`{"type":"TF","answer":"T"}`.
+
+   Hint: :spoiler:`Think of the Eiffel Tower.`

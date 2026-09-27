@@ -1,0 +1,43 @@
+{
+  "check_answers": "Vérifier les réponses",
+  "restart": "Recommencer",
+  "show_solution": "Afficher la solution",
+  "true_short": "V",
+  "false_short": "F",
+  "unanswered_short": "?",
+  "true": "Vrai",
+  "false": "Faux",
+  "unanswered": "Sans réponse",
+  "feedback_correct": "Correct",
+  "feedback_incorrect": "Incorrect",
+  "feedback_solution": "Solution affichée",
+  "show_hidden_text": "Afficher le texte masqué",
+  "exercise_heading": "Exercice {number} : {title}",
+  "question_context": "Question {number}{context}",
+  "math_unknown_variable": "L’expression contient une variable inconnue. Variables connues : {variables}",
+  "math_syntax_error": "L’expression contient une erreur de syntaxe.",
+  "math_error": "Expression mathématique : erreur inconnue.",
+  "invalid_answer": "Impossible d’analyser la réponse attendue. Contactez l’auteur du site : {answer}",
+  "grading_complete": "Vérification terminée",
+  "solutions_shown": "Solutions affichées",
+  "quiz_restarted": "Exercice recommencé",
+  "quiz_unavailable": "Exercice interactif indisponible.",
+  "question_unavailable": "Question interactive indisponible.",
+  "count_correct": {
+    "one": "{count} réponse correcte",
+    "other": "{count} réponses correctes"
+  },
+  "count_incorrect": {
+    "one": "{count} réponse incorrecte",
+    "other": "{count} réponses incorrectes"
+  },
+  "count_unanswered": {
+    "one": "{count} question sans réponse",
+    "other": "{count} questions sans réponse"
+  },
+  "count_solution": {
+    "one": "{count} solution affichée",
+    "other": "{count} solutions affichées"
+  },
+  "status": "{action} : {correct}, {incorrect}, {unanswered}, {solution}."
+}

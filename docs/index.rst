@@ -36,6 +36,7 @@ and the complete :doc:`authoring reference <authoring>`.
    getting-started
    examples
    authoring
+   internationalization
    progress
    contributing
    changelog

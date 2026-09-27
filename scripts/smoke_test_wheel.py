@@ -35,6 +35,9 @@ def main() -> None:
         "sphinx_yaq/models.py",
         "sphinx_yaq/quiz.py",
         "sphinx_yaq/state.py",
+        "sphinx_yaq/i18n.py",
+        "sphinx_yaq/locales/en.json",
+        "sphinx_yaq/locales/fr.json",
         "sphinx_yaq/_static/sphinx_yaq/yaq.js",
         "sphinx_yaq/_static/sphinx_yaq/math.js",
         "sphinx_yaq/_static/sphinx_yaq/css/yaq.css",
@@ -74,6 +77,7 @@ def main() -> None:
         (project / "conf.py").write_text(
             'extensions = ["sphinx_yaq"]\n'
             'project = "installed wheel smoke test"\n'
+            'language = "fr"\n'
             'html_theme = "basic"\n',
             encoding="utf-8",
         )
@@ -109,6 +113,8 @@ def main() -> None:
             raise SystemExit(f"Smoke test imported repository source: {installed_module}")
 
         html = (output / "index.html").read_text(encoding="utf-8")
+        if "Vérifier les réponses" not in html:
+            raise SystemExit("Installed package did not emit its French message catalog")
         required = (
             "_static/sphinx_yaq/yaq.js",
             "_static/sphinx_yaq/math.js",

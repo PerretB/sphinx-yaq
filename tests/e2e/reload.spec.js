@@ -11,7 +11,7 @@ test("locally saved progress survives a real browser reload", async ({ page }) =
   const firstQuiz = page.locator(".yaq-root").first();
   const firstAnswer = firstQuiz.locator('input[type="text"]').first();
   await firstAnswer.fill("Yalta");
-  await firstQuiz.getByText("Check answers", { exact: true }).click();
+  await firstQuiz.getByText("Vérifier les réponses", { exact: true }).click();
   await expect(firstAnswer).toBeDisabled();
   await expect.poll(() => page.evaluate(() => localStorage.length)).toBeGreaterThan(0);
 
