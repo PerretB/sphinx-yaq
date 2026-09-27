@@ -415,7 +415,7 @@ describe("YAQ runtime characterization", () => {
     expect(isDisplayed(button(document, "Show solution"))).toBe(false);
     expect(isDisplayed(button(document, "Check answers"))).toBe(false);
     expect(isDisplayed(button(document, "Restart"))).toBe(true);
-    expect(document.querySelector('[role="status"]').textContent).toContain("1 incorrect, 0 unanswered, 0 solution shown");
+    expect(document.querySelector('[role="status"]').textContent).toContain("1 incorrect, 0 unanswered, 0 solutions shown");
     for (const control of document.querySelectorAll('[data-index]')) expect(control.disabled).toBe(true);
 
     await click(document.querySelector(`[data-index="${wrongIndex === "0" ? "2" : "0"}"]`));

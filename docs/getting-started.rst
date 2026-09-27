@@ -31,7 +31,8 @@ extensions you use:
    extensions = ["sphinx_yaq"]
 
 The extension copies its JavaScript and CSS into the generated site
-automatically. There are no extension-specific Sphinx configuration settings.
+automatically. The interface follows Sphinx's ``language`` setting; see
+:doc:`internationalization` for project, document, and quiz overrides.
 
 Your first quiz
 ---------------

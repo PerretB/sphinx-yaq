@@ -16,6 +16,7 @@ from sphinx.util.docutils import Directive
 
 from .models import ModelValidationError, Question, parse_question
 from .state import get_document_state, parsing_context
+from .i18n import localize_doctree, record_document
 
 
 class QuizQuestion(nodes.General, nodes.Element):
@@ -91,7 +92,15 @@ def visit_quiz_node(self, node: Quiz) -> None:
         "title": node["title"],
         "uid": html.escape(node["uid"], quote=True),
     }
-    self.body.append(self.starttag(node, "div", "", CLASS="yaq", **{"data-model": _json(model)}))
+    self.body.append(
+        self.starttag(
+            node,
+            "div",
+            "",
+            CLASS="yaq",
+            **{"data-model": _json(model), "data-i18n": _json(node["i18n"])},
+        )
+    )
 
 
 def depart_quiz_node(self, node: Quiz) -> None:
@@ -103,7 +112,10 @@ class QuizDirective(Directive):
     required_arguments = 1
     optional_arguments = 0
     final_argument_whitespace = False
-    option_spec = {"title": validators.unchanged_required}
+    option_spec = {
+        "title": validators.unchanged_required,
+        "language": validators.unchanged_required,
+    }
 
     def run(self):
         self.assert_has_content()
@@ -141,6 +153,9 @@ class QuizDirective(Directive):
         state.quiz_ids[quiz_id] = (source, self.lineno)
 
         result = Quiz(uid=quiz_id, name=self.name, title=self.options["title"])
+        result["language"] = self.options.get("language")
+        result.source = source
+        result.line = self.lineno
         with parsing_context(document, "quiz"):
             self.state.nested_parse(self.content, self.content_offset, result)
         return [result]
@@ -194,7 +209,11 @@ def spoiler_inline(
 
 def visit_spoiler_inline_node(self, node: SpoilerInline) -> None:
     self.body.append(
-        '<button type="button" aria-label="Show hidden text" class="yaq-spoiler-inline yaq-spoiler-inline-hidden">'
+        '<button type="button" aria-label="'
+        + html.escape(node["label"], quote=True)
+        + '" data-ui-language="'
+        + node["ui_language"]
+        + '" class="yaq-spoiler-inline yaq-spoiler-inline-hidden">'
     )
     self.body.append(html.escape(node["content"]))
 
@@ -212,6 +231,9 @@ def ensure_html_builder(app: Sphinx) -> None:
 
 
 def setup(app: Sphinx) -> dict[str, str | bool]:
+    app.add_config_value("yaq_language", None, "env", types=[str, type(None)])
+    app.connect("doctree-resolved", localize_doctree)
+    app.connect("doctree-read", record_document)
     static_path = os.path.join(os.path.dirname(__file__), "_static")
     app.config.html_static_path.append(static_path)
 

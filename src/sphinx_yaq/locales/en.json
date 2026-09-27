@@ -1,0 +1,43 @@
+{
+  "check_answers": "Check answers",
+  "restart": "Restart",
+  "show_solution": "Show solution",
+  "true_short": "T",
+  "false_short": "F",
+  "unanswered_short": "?",
+  "true": "True",
+  "false": "False",
+  "unanswered": "Unanswered",
+  "feedback_correct": "Correct",
+  "feedback_incorrect": "Incorrect",
+  "feedback_solution": "Solution shown",
+  "show_hidden_text": "Show hidden text",
+  "exercise_heading": "Exercise {number} : {title}",
+  "question_context": "Question {number}{context}",
+  "math_unknown_variable": "The expression contains an unknown variable. Known variables: {variables}",
+  "math_syntax_error": "The expression contains a syntax error.",
+  "math_error": "Mathematical expression: unknown error.",
+  "invalid_answer": "Failed to parse correct answer, contact website creator: {answer}",
+  "grading_complete": "Grading complete",
+  "solutions_shown": "Solutions shown",
+  "quiz_restarted": "Quiz restarted",
+  "quiz_unavailable": "Interactive quiz unavailable.",
+  "question_unavailable": "Interactive question unavailable.",
+  "count_correct": {
+    "one": "{count} correct",
+    "other": "{count} correct"
+  },
+  "count_incorrect": {
+    "one": "{count} incorrect",
+    "other": "{count} incorrect"
+  },
+  "count_unanswered": {
+    "one": "{count} unanswered",
+    "other": "{count} unanswered"
+  },
+  "count_solution": {
+    "one": "{count} solution shown",
+    "other": "{count} solutions shown"
+  },
+  "status": "{action}: {correct}, {incorrect}, {unanswered}, {solution}."
+}

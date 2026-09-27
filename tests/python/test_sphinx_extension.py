@@ -147,7 +147,7 @@ def test_unicode_quotes_backslashes_ampersands_and_angles_survive_emission(app, 
         "displayed-answer": 'He said "yes" at C:\\tmp',
     }
 
-    quiz_model = re.search(r'class="yaq" data-model="([^"]+)"', html).group(1)
+    quiz_model = re.search(r'class="yaq"[^>]* data-model="([^"]+)"', html).group(1)
     assert json.loads(html_module.unescape(quiz_model)) == {
         "title": 'Hiérarchie d\'héritage "quoted" & <tag> &amp;',
         "uid": "special&#x27;id",

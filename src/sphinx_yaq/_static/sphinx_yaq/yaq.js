@@ -193,6 +193,77 @@
     return expectedElements === correctElements && wrongElements === 0;
   }
 
+  // src/sphinx_yaq/locales/en.json
+  var en_default = {
+    check_answers: "Check answers",
+    restart: "Restart",
+    show_solution: "Show solution",
+    true_short: "T",
+    false_short: "F",
+    unanswered_short: "?",
+    true: "True",
+    false: "False",
+    unanswered: "Unanswered",
+    feedback_correct: "Correct",
+    feedback_incorrect: "Incorrect",
+    feedback_solution: "Solution shown",
+    show_hidden_text: "Show hidden text",
+    exercise_heading: "Exercise {number} : {title}",
+    question_context: "Question {number}{context}",
+    math_unknown_variable: "The expression contains an unknown variable. Known variables: {variables}",
+    math_syntax_error: "The expression contains a syntax error.",
+    math_error: "Mathematical expression: unknown error.",
+    invalid_answer: "Failed to parse correct answer, contact website creator: {answer}",
+    grading_complete: "Grading complete",
+    solutions_shown: "Solutions shown",
+    quiz_restarted: "Quiz restarted",
+    quiz_unavailable: "Interactive quiz unavailable.",
+    question_unavailable: "Interactive question unavailable.",
+    count_correct: {
+      one: "{count} correct",
+      other: "{count} correct"
+    },
+    count_incorrect: {
+      one: "{count} incorrect",
+      other: "{count} incorrect"
+    },
+    count_unanswered: {
+      one: "{count} unanswered",
+      other: "{count} unanswered"
+    },
+    count_solution: {
+      one: "{count} solution shown",
+      other: "{count} solutions shown"
+    },
+    status: "{action}: {correct}, {incorrect}, {unanswered}, {solution}."
+  };
+
+  // frontend/src/i18n.js
+  function createTranslator({ language = "en", messages = {} } = {}) {
+    const pluralRules = new Intl.PluralRules(language);
+    const translate = (key, parameters = {}) => {
+      var _a, _b;
+      let template = (_a = messages[key]) != null ? _a : en_default[key];
+      if (typeof template === "object" && template !== null) {
+        template = (_b = template[pluralRules.select(parameters.count)]) != null ? _b : template.other;
+      }
+      if (typeof template !== "string") throw new Error(`Unknown YAQ message: ${key}`);
+      return template.replace(/\{(\w+)\}/g, (match, name) => {
+        var _a2;
+        return String((_a2 = parameters[name]) != null ? _a2 : match);
+      });
+    };
+    translate.language = language;
+    return translate;
+  }
+  function translatorFor(element) {
+    try {
+      return createTranslator(JSON.parse(element.getAttribute("data-i18n") || "{}"));
+    } catch (e) {
+      return createTranslator();
+    }
+  }
+
   // frontend/src/model.js
   var QuestionState = Object.freeze({
     unsolved: 1,
@@ -461,17 +532,6 @@
     var self = {};
     var quizz = [];
     var quizIdentifiers = /* @__PURE__ */ new Set();
-    var texts = {
-      "True": "T",
-      "False": "F",
-      "dontKnow": "?",
-      "gradeButtonText": "Check answers",
-      "resetButtonText": "Restart",
-      "solveButtonText": "Show solution",
-      "wrongMathVariableError": "The expression contains an unknown variable. Known variables: ",
-      "wrongMathSyntaxError": "The expression contains a syntax error.",
-      "wrongMathError": "Mathematical expression: unknown error."
-    };
     function getDefault(tryValue, defaultValue) {
       if (tryValue === void 0)
         return defaultValue;
@@ -497,12 +557,12 @@
       marker.append(icon, createElement("span", "yaq-feedback-text yaq-visually-hidden", " " + label));
       return marker;
     }
-    function questionContext(element, index) {
+    function questionContext(element, index, t) {
       var _a, _b;
       const surrounding = (_a = element.parentElement) == null ? void 0 : _a.cloneNode(true);
       surrounding == null ? void 0 : surrounding.querySelectorAll(".yaq-q, .yaq-spoiler-inline-hidden").forEach((node) => node.remove());
       const prose = ((_b = surrounding == null ? void 0 : surrounding.textContent) == null ? void 0 : _b.replace(/\s+/g, " ").trim()) || "";
-      return "Question " + (index + 1) + (prose ? ": " + prose : "");
+      return t("question_context", { number: index + 1, context: prose ? ": " + prose : "" });
     }
     function setVisible(element, visible) {
       element.style.display = visible ? "" : "none";
@@ -520,13 +580,13 @@
           "selectedIndex": selectedIndex
         };
       }
-      function Switch32(_model, onChange) {
+      function Switch32(_model, onChange, t) {
         this.model = getDefaultModelSwitch3();
         this.__onChange = onChange || function() {
         };
         this.rootDomElement = void 0;
         this.__buttons = void 0;
-        this.__values = [texts["True"], texts["dontKnow"], texts["False"]];
+        this.__values = [t("true_short"), t("unanswered_short"), t("false_short")];
         this.__updateSelection = function() {
           this.__buttons.forEach((button, index) => {
             const selected = index === this.model.selectedIndex;
@@ -609,7 +669,7 @@
           "value": value
         };
       }
-      function FBQuestion2(params, onChange) {
+      function FBQuestion2(params, onChange, t) {
         this.model = getDefaultModel();
         this.__flags = getDefault(params["flags"], "");
         this.__answer = getDefault(params["answer"], "");
@@ -663,6 +723,7 @@
           root.append(input);
           this.__warningMarker = createElement("span", "yaq-hidden yaq-warning-marker", "⚠");
           this.__warningMarker.dataset.role = "warningMarker";
+          this.__warningMarker.lang = t.language;
           this.__warningMarker.setAttribute("role", "alert");
           root.append(this.__warningMarker);
           this.__updateEnabled();
@@ -713,7 +774,7 @@
                 compileMath: math.compile.bind(math),
                 random: Math.random,
                 onCorrectAnswerSyntaxError: function(correctAnswer) {
-                  window.alert("Failed to parse correct answer, contact website creator: " + correctAnswer);
+                  window.alert(t("invalid_answer", { answer: correctAnswer }));
                 }
               })) {
                 this.model = gradeAnswer(this.model, { answered: true, correct: true });
@@ -722,11 +783,11 @@
               }
             } catch (e) {
               if (e instanceof MathVariableError) {
-                this.__warningMarker.title = texts["wrongMathVariableError"] + Object.keys(this.__math_vars).join(", ");
+                this.__warningMarker.title = t("math_unknown_variable", { variables: Object.keys(this.__math_vars).join(", ") });
               } else if (e instanceof SyntaxError) {
-                this.__warningMarker.title = texts["wrongMathSyntaxError"] + " " + e.message;
+                this.__warningMarker.title = t("math_syntax_error");
               } else {
-                this.__warningMarker.title = texts["wrongMathError"] + e.message;
+                this.__warningMarker.title = t("math_error");
               }
               this.__warningMarker.classList.remove("yaq-hidden");
               this.__warningMarker.textContent = "⚠ " + this.__warningMarker.title;
@@ -866,7 +927,7 @@
           "state": state
         };
       }
-      function TFQuestion2(params, onChange) {
+      function TFQuestion2(params, onChange, t) {
         this.model = getDefaultModel();
         this.__answer = getDefault(params["answer"], "");
         this.rootDomElement = void 0;
@@ -887,7 +948,7 @@
           this.__switch3 = new Switch3(void 0, (function() {
             this.model = answerChanged(this.model);
             this.__onChange();
-          }).bind(this));
+          }).bind(this), t);
           this.model.innerModel = this.__switch3.model;
           root.append(this.__switch3.getRootElement());
           this.__updateEnabled();
@@ -957,7 +1018,7 @@
           "state": state
         };
       }
-      function QuestionContainer2(innerQuestionParams, rootElement, onChange, context) {
+      function QuestionContainer2(innerQuestionParams, rootElement, onChange, context, t) {
         this.model = getDefaultModel();
         this.rootDomElement = rootElement;
         this.__innerQuestion = void 0;
@@ -1008,7 +1069,7 @@
           var QuestionConstructor = questionConstructors[innerQuestionParams2.type];
           if (!QuestionConstructor)
             throw new Error("Unsupported YAQ question type: " + innerQuestionParams2.type);
-          this.__innerQuestion = new QuestionConstructor(innerQuestionParams2, this.__innerChanged.bind(this));
+          this.__innerQuestion = new QuestionConstructor(innerQuestionParams2, this.__innerChanged.bind(this), t);
           this.model.innerModel = this.__innerQuestion.getModel();
           root.append(this.__innerQuestion.getRootElement());
           const field = root.querySelector("input, select");
@@ -1018,12 +1079,16 @@
             switchGroup.setAttribute("role", "group");
             switchGroup.setAttribute("aria-label", context);
             switchGroup.querySelectorAll("button").forEach((button, index) => {
-              button.setAttribute("aria-label", ["True", "Unanswered", "False"][index]);
+              button.setAttribute("aria-label", [t("true"), t("unanswered"), t("false")][index]);
+              button.lang = t.language;
             });
           }
-          this.__wrongMarker = createFeedbackMarker("yaq-wrong-marker", "wrongMarker", "✘", "Incorrect");
-          this.__correctMarker = createFeedbackMarker("yaq-correct-marker", "correctMarker", "✔", "Correct");
-          this.__infoMarker = createFeedbackMarker("yaq-solution-marker", "solutionMarker", "ⓘ", "Solution shown");
+          this.__wrongMarker = createFeedbackMarker("yaq-wrong-marker", "wrongMarker", "✘", t("feedback_incorrect"));
+          this.__correctMarker = createFeedbackMarker("yaq-correct-marker", "correctMarker", "✔", t("feedback_correct"));
+          this.__infoMarker = createFeedbackMarker("yaq-solution-marker", "solutionMarker", "ⓘ", t("feedback_solution"));
+          [this.__wrongMarker, this.__correctMarker, this.__infoMarker].forEach((marker) => {
+            marker.lang = t.language;
+          });
           root.append(this.__wrongMarker);
           root.append(this.__correctMarker);
           root.append(this.__infoMarker);
@@ -1082,7 +1147,7 @@
           "state": state
         };
       }
-      function QuizActivity2(sourceElement, onChange) {
+      function QuizActivity2(sourceElement, onChange, t) {
         this.model = getDefaultModel();
         this.rootDomElement = void 0;
         this.__questions = [];
@@ -1128,19 +1193,21 @@
           this.rootDomElement = root;
           root.append(...Array.from(sourceElement2.cloneNode(true).childNodes));
           const placeholders = Array.from(root.querySelectorAll(".yaq-q"));
-          const contexts = placeholders.map((elem, index) => questionContext(elem, index));
+          const contexts = placeholders.map((elem, index) => questionContext(elem, index, t));
           placeholders.forEach((elem, index) => {
             try {
               var textmodel = __b64DecodeUnicode(elem.getAttribute("data-model"));
               var model = JSON.parse(textmodel);
-              var question = new QuestionContainer(model, elem, this.__questionChanged.bind(this), contexts[index]);
+              var question = new QuestionContainer(model, elem, this.__questionChanged.bind(this), contexts[index], t);
               this.__questions.push(question);
               this.model["innerModel" + index] = question.getModel();
             } catch (error) {
               console.error("YAQ: Error while initializing question.", error);
               elem.classList.remove("yaq-q", "yaq-Question");
               elem.classList.add("yaq-question-fallback");
-              elem.append(createElement("span", null, " Interactive question unavailable."));
+              const fallback = createElement("span", null, " " + t("question_unavailable"));
+              fallback.lang = t.language;
+              elem.append(fallback);
             }
           });
           this.__updateState();
@@ -1187,6 +1254,7 @@
         };
       }
       function Quiz2(sourceElement, params, fingerprint) {
+        const t = translatorFor(sourceElement);
         this.model = getDefaultModel();
         this.__fingerprint = fingerprint;
         this.__exerciceNumber = getDefault(params["exerciceNumber"], 0);
@@ -1206,7 +1274,13 @@
         this.__announce = function(action) {
           const states = this.__activity.__questions.map((question) => question.getModel().state);
           const count = (state) => states.filter((value) => value === state).length;
-          this.__statusText.textContent = action + ": " + count(QuestionState.correct) + " correct, " + states.filter((state) => state & QuestionState.wrong).length + " incorrect, " + count(QuestionState.unsolved) + " unanswered, " + count(QuestionState.solved) + " solution shown.";
+          this.__statusText.textContent = t("status", {
+            action,
+            correct: t("count_correct", { count: count(QuestionState.correct) }),
+            incorrect: t("count_incorrect", { count: states.filter((state) => state & QuestionState.wrong).length }),
+            unanswered: t("count_unanswered", { count: count(QuestionState.unsolved) }),
+            solution: t("count_solution", { count: count(QuestionState.solved) })
+          });
         };
         this.__updateEnabled = function() {
           [this.__buttonGrade, this.__buttonReset, this.__buttonSolve].forEach((button) => {
@@ -1229,18 +1303,18 @@
         };
         this.grade = function() {
           this.__activity.grade();
-          this.__announce("Grading complete");
+          this.__announce(t("grading_complete"));
         };
         this.solve = function() {
           this.__activity.solve();
-          this.__announce("Solutions shown");
+          this.__announce(t("solutions_shown"));
         };
         this.reset = function() {
           this.__activity.reset();
           this.model.enabled = true;
           this.__updateEnabled();
           self.storage.remove(this.__uid);
-          this.__announce("Quiz restarted");
+          this.__announce(t("quiz_restarted"));
         };
         this.__initEvent = function() {
           this.__buttonGrade.addEventListener("click", this.grade.bind(this));
@@ -1263,26 +1337,28 @@
         this.__initDomElement = function(sourceElement2) {
           var root = createElement("div", "yaq-root");
           this.rootDomElement = root;
-          const heading = createElement("h2", "yaq-head", "Exercise " + (this.__exerciceNumber + 1) + " : " + this.__title);
+          const heading = createElement("h2", "yaq-head", t("exercise_heading", { number: this.__exerciceNumber + 1, title: this.__title }));
+          heading.lang = t.language;
           root.append(heading);
           root.setAttribute("role", "region");
           root.setAttribute("aria-label", heading.textContent);
           var mainContent = createElement("div", "yaq-main-content");
           root.append(mainContent);
-          this.__activity = new QuizActivity(sourceElement2, this.__activityChanged.bind(this));
+          this.__activity = new QuizActivity(sourceElement2, this.__activityChanged.bind(this), t);
           this.model.innerModel = this.__activity.getModel();
           mainContent.append(this.__activity.getRootElement());
           this.model.state = this.__activity.getModel().state;
           var footer = createElement("div", "yaq-footer");
+          footer.lang = t.language;
           if (this.__activity.getNumberOfQuestions() === 0)
             footer.classList.add("yaq-hidden");
-          this.__buttonGrade = createElement("button", "yaq-button", texts["gradeButtonText"]);
+          this.__buttonGrade = createElement("button", "yaq-button", t("check_answers"));
           this.__buttonGrade.type = "button";
           footer.append(this.__buttonGrade);
-          this.__buttonSolve = createElement("button", "yaq-button", texts["solveButtonText"]);
+          this.__buttonSolve = createElement("button", "yaq-button", t("show_solution"));
           this.__buttonSolve.type = "button";
           footer.append(this.__buttonSolve);
-          this.__buttonReset = createElement("button", "yaq-button", texts["resetButtonText"]);
+          this.__buttonReset = createElement("button", "yaq-button", t("restart"));
           this.__buttonReset.type = "button";
           footer.append(this.__buttonReset);
           this.__status = createElement("div", "yaq-status");
@@ -1340,7 +1416,10 @@
         } catch (error) {
           console.error("YAQ: Error while initializing quiz.", error);
           element.classList.add("yaq-quiz-fallback");
-          element.append(createElement("p", null, "Interactive quiz unavailable."));
+          const t = translatorFor(element);
+          const fallback = createElement("p", null, t("quiz_unavailable"));
+          fallback.lang = t.language;
+          element.append(fallback);
         }
         element.classList.add("yaq-active");
       });
@@ -1354,9 +1433,14 @@
   document.addEventListener("DOMContentLoaded", function() {
     yaq_app.init();
     document.querySelectorAll(".yaq-spoiler-inline-hidden").forEach((element) => {
+      var _a;
+      const contentLanguage = ((_a = element.closest("[lang]")) == null ? void 0 : _a.lang) || document.documentElement.lang;
+      if (element.dataset.uiLanguage) element.lang = element.dataset.uiLanguage;
       element.addEventListener("click", () => {
         element.classList.remove("yaq-spoiler-inline-hidden");
         element.removeAttribute("aria-label");
+        if (contentLanguage) element.lang = contentLanguage;
+        else element.removeAttribute("lang");
         element.disabled = true;
       });
     });

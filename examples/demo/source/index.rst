@@ -41,10 +41,10 @@ Plan du document:
     
 	/intro/index
 	/quiz/index
+	/i18n
 
 
 .. 
 	/doc/index
-
 
 
