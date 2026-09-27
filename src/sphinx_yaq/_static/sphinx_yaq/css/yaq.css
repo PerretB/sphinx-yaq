@@ -1,18 +1,19 @@
-.yaq, .yaq-spoiler-block{
+/* Document scope raises specificity above theme rules such as div.body h2. */
+:root .yaq, :root .yaq-spoiler-block{
 	--yaq-accent: #386d99;
 	--yaq-border: #253574;
 	--yaq-focus: #162f62;
 }
 
-.yaq{
+:root .yaq{
 	display: none;
 }
 
-.yaq.yaq-active{display: block;}
+:root .yaq.yaq-active{display: block;}
 
 
 
-.yaq-root{
+:root .yaq-root{
 	width : 100%;
 	box-sizing: border-box;
 	border-style: solid;
@@ -21,7 +22,7 @@
 	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
 }
 
-.yaq-head{
+:root .yaq-head{
 	font-size : 120%;
 	font-weight: 700;
 	color: white;
@@ -30,53 +31,54 @@
 	box-sizing: border-box;
 	padding : 5px 10px 5px 10px;
 	margin-bottom:10px;
+	margin-top:0px;
 }
 
-.yaq-main-content{
+:root .yaq-main-content{
 	padding-left: 10px;
 	padding-right: 10px;
 }
 
-.yaq-content{
+:root .yaq-content{
 	margin-left : 20px;
 }
 
-.yaq-TFQuestion{
+:root .yaq-TFQuestion{
 	margin-bottom: 5px;
 	margin-left:10px;
 }
 
-.yaq-questionText{
+:root .yaq-questionText{
 	display: inline-block;
 }
 
-.yaq-introTFQuestions,
-.yaq-unsolvedTF-section{
+:root .yaq-introTFQuestions,
+:root .yaq-unsolvedTF-section{
 	padding-left: 14px;
 	padding-right:14px;
 }
 
-.yaq-introTFQuestions{
+:root .yaq-introTFQuestions{
 	margin-bottom:5px;
 }
 
-.yaq-footer{
+:root .yaq-footer{
 	margin-top:15px;
 	margin-bottom:10px;
 	
 }
 
-.yaq-footer-status{
+:root .yaq-footer-status{
 	margin-left:auto;
 }
 
-.yaq-interractiveElement
+:root .yaq-interractiveElement
 {
 	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 2px 5px 0 rgba(0, 0, 0, 0.19);
 	cursor: pointer;
 }
 
-.yaq-interractiveElement:hover{
+:root .yaq-interractiveElement:hover{
 
 
   /*border: 3px solid #253574;*/
@@ -84,7 +86,7 @@
   /*border-radius:3px;*/
 }
 
-.yaq-button{
+:root .yaq-button{
 	padding-top:5px;
 	padding-bottom:5px;
 	padding-left:10px;
@@ -103,25 +105,24 @@
 	font: inherit;
 }
 
-.yaq-button:disabled{cursor: default;}
+:root .yaq-button:disabled{cursor: default;}
 
-.yaq-blink{animation: yaq-blink 600ms ease-in-out;}
+:root .yaq-blink{animation: yaq-blink 600ms ease-in-out;}
 @keyframes yaq-blink{50%{opacity:0;}}
 
-.yaq-marker{margin: 0 10px; font-weight: 700;}
-.yaq-feedback-text{font-size: 0.85em;}
-.yaq-unanswered-marker{color: #554700;}
-.yaq-status{display: inline;}
-.yaq-root input[type="text"]{max-width: 100%;box-sizing: border-box;}
-.yaq-root select{max-width: 100%;}
-.yaq-root :is(button, input, select, summary):focus-visible,
-.yaq-spoiler-inline:focus-visible,
-.yaq-spoiler-block summary:focus-visible{
+:root .yaq-marker{margin: 0 10px; font-weight: 700;}
+:root .yaq-unanswered-marker{color: #554700;}
+:root .yaq-status{display: inline;}
+:root .yaq-root input[type="text"]{max-width: 100%;box-sizing: border-box;}
+:root .yaq-root select{max-width: 100%;}
+:root .yaq-root :is(button, input, select, summary):focus-visible,
+:root .yaq-spoiler-inline:focus-visible,
+:root .yaq-spoiler-block summary:focus-visible{
   outline: 3px solid var(--yaq-focus, #162f62);
   outline-offset: 2px;
 }
-@media (prefers-reduced-motion: reduce){.yaq-blink{animation: none;}}
-.yaq-visually-hidden{
+@media (prefers-reduced-motion: reduce){:root .yaq-blink{animation: none;}}
+:root .yaq-visually-hidden{
   position: absolute;
   width: 1px;
   height: 1px;
@@ -132,16 +133,16 @@
   white-space: nowrap;
   border: 0;
 }
-.yaq-wrong-marker{color: #9b0000;}
-.yaq-correct-marker{color: #006b00;}
-.yaq-solution-marker{color: #124e9b;}
-.yaq-warning-marker{font-size: 100%; color: #705000; margin: 0 10px;}
+:root .yaq-wrong-marker{color: #9b0000;}
+:root .yaq-correct-marker{color: #006b00;}
+:root .yaq-solution-marker{color: #124e9b;}
+:root .yaq-warning-marker{font-size: 100%; color: #705000; margin: 0 10px;}
 
-.yaq-button:after {
+:root .yaq-button:after {
   content: " >";
 }
 
-.yaq-switch3{
+:root .yaq-switch3{
 	vertical-align: middle;
 	width : 100px;
 	background-color : transparent;
@@ -151,14 +152,14 @@
 	margin-right: 15px;
 }
 
-.yaq-switch3-buttons{
+:root .yaq-switch3-buttons{
   width: 100%;
   white-space: nowrap;
   margin : 0px;
   padding:0px;
   box-sizing: border-box;
 }
-.yaq-switch3-button{
+:root .yaq-switch3-button{
 
   width : 33.3334%;
   padding-top:5px;
@@ -174,79 +175,79 @@
 	cursor: pointer;
 }
 
-.yaq-switch3-button + .yaq-switch3-button
+:root .yaq-switch3-button + .yaq-switch3-button
 {
   border-left-width : 1px;
   border-left-style	: solid;
   border-left-color : var(--yaq-border);
 }
 
-.yaq-switch3-button-active
+:root .yaq-switch3-button-active
 {
 	background-color : var(--yaq-accent);
   color : #FFF;
   font-weight: 700;
 }
 
-.yaq-switch3-button-notActive
+:root .yaq-switch3-button-notActive
 {
   background-color : transparent;
   color : #000;
 }
 
-.yaq-switch3-button-disabled
+:root .yaq-switch3-button-disabled
 {
   background-color : #EBEBE4;
   color : #545454;
   font-weight: 700;
 }
 
-.yaq-wrongTF-section, .yaq-correctTF-section{
+:root .yaq-wrongTF-section, :root .yaq-correctTF-section{
     border-width: 1px 0 0 0;
     border-style: solid;
     margin-bottom: 10px;
 }
 
-.yaq-explanation{
+:root .yaq-explanation{
 	font-style: italic;
 	margin-left:120px;
 }
 
-.yaq-FBQuestions{
+:root .yaq-FBQuestions{
 	padding-left:14px;
 	padding-right:14px;
 }
 
-.yaq-FBField{
+:root .yaq-FBField{
 	display: inline-block;
 	margin-right: 5px;
 }
 
-.yaq-FBText{
+:root .yaq-FBText{
 	margin-right: 5px;
 }
 
-.yaq-hidden{
+:root .yaq-hidden{
 	display: none;
 }
 
 
-.yaq-spoiler-inline-hidden{
+:root .yaq-spoiler-inline-hidden{
   color: #000;
   background-color: #000;
   cursor: pointer;
 }
 
-.yaq-spoiler-inline{
+:root .yaq-spoiler-inline{
 	border: 0;
 	font: inherit;
 	padding: 0;
 }
-.yaq-spoiler-inline:disabled{color: inherit;}
+:root .yaq-spoiler-inline:disabled{color: inherit;}
 
 
 
-.yaq-spoiler-block-title{
+:root .yaq-spoiler-block-title{
   width: fit-content;
   padding-top: 5px;
   padding-bottom: 5px;
@@ -260,7 +261,7 @@
   cursor: pointer;
 }
 
-.yaq-spoiler-block-content{
+:root .yaq-spoiler-block-content{
   border-left: solid;
   border-width: 1px;
   padding-left: 10px;
@@ -269,14 +270,14 @@
 }
 
 @media (max-width: 480px){
-  .yaq-content, .yaq-TFQuestion{margin-left: 0;}
-  .yaq-explanation{margin-left: 0;}
-  .yaq-footer{display: flex; flex-wrap: wrap;}
+  :root .yaq-content, :root .yaq-TFQuestion{margin-left: 0;}
+  :root .yaq-explanation{margin-left: 0;}
+  :root .yaq-footer{display: flex; flex-wrap: wrap;}
 }
 
 @media print{
-  .yaq{display: block;}
-  .yaq-root{break-inside: avoid;}
-  .yaq-button, .yaq-switch3, .yaq-FBField, .yaq-root select{display: none;}
-  .yaq-spoiler-block-content{display: block;}
+  :root .yaq{display: block;}
+  :root .yaq-root{break-inside: avoid;}
+  :root .yaq-button, :root .yaq-switch3, :root .yaq-FBField, :root .yaq-root select{display: none;}
+  :root .yaq-spoiler-block-content{display: block;}
 }

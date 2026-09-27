@@ -54,6 +54,7 @@ describe("YAQ runtime characterization", () => {
       expect(marker.title).toBe(label);
       expect(marker.querySelector('[aria-hidden="true"]').textContent).toBe(symbol);
       expect(marker.querySelector(".yaq-feedback-text").textContent.trim()).toBe(label);
+      expect(marker.querySelector(".yaq-feedback-text").classList.contains("yaq-visually-hidden")).toBe(true);
     }
   });
 
