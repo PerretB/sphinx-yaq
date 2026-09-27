@@ -2,47 +2,29 @@
 
 ## Purpose and scope
 
-This repository is the target for migrating a legacy Sphinx extension for interactive HTML quizzes into a pip-installable package.
-
-Repository roles are fixed for the migration:
-
-- Target repository: `D:\sphinx-yaq`. Make all refactoring, packaging, CI, release, and Git changes here.
-- Legacy reference: `C:\Users\perre\Dropbox\cours\demoSphinx`. Inspect and run it as the behavioral oracle, but do not reorganize or fix its production implementation unless the user explicitly requests that separate work.
-- Copy or reimplement required source, tests, and demo material into this repository. Do not make the migration depend on modifying the legacy reference in place.
-
-Use these files according to the task:
-
-- `internal/docs/migration_plan.md` for architecture, priorities, and the final definition of done.
-- `internal/docs/migration_status.md` for the current batch, completed work, active decisions, and blockers.
-- `internal/docs/migration_batches/` for the implementation contract of a specific batch.
-- `tests/README.md` for the current characterization-test setup.
-- `internal/docs/technical_description.md` for existing behavior and architecture.
-
-Read only the documents relevant to the requested work. Do not load every migration document for a small isolated task.
+This repository contains sphinx-yaq, a pip-installable Sphinx extension for
+interactive self-assessment quizzes. Public documentation lives in `docs/`;
+test setup is documented in `tests/README.md`.
 
 ## Fixed product constraints
 
-- Support HTML Sphinx builders only. Unsupported builders must eventually fail early with a clear error; do not implement non-HTML rendering.
-- Remove Firebase, authentication, cloud synchronization, and cookie persistence completely.
+- Support HTML Sphinx builders only. Unsupported builders must fail early with a clear error; do not implement non-HTML rendering.
+- Do not add Firebase, authentication, cloud synchronization, or cookie persistence.
 - Persist progress locally with versioned, namespaced `localStorage` only.
-- Preserve the existing `quiz` and `spoiler` authoring syntax until a batch explicitly changes it.
+- Preserve the existing `quiz` and `spoiler` authoring syntax unless a requested change explicitly revises it.
 - Treat quizzes as self-assessment. Correct answers remain client-side and are not secure examination data.
 
-## Batch discipline
+## Scope and behavior
 
-- Implement only the requested batch or explicitly named subset.
-- Do not begin later migration phases opportunistically.
-- Preserve behavior unless the active batch identifies an intentional correction.
+- Implement only the requested scope.
+- Preserve behavior unless the requested work identifies an intentional correction.
 - Add or update a failing test before an intentional behavior change.
-- Keep the target repository usable and its copied demo buildable at every completed batch.
-- Update `internal/docs/migration_status.md` when a batch materially advances, a decision is made, or a blocker is discovered.
-- Do not mark a batch complete until all of its acceptance criteria and validation commands pass.
+- Keep the repository usable and its demo buildable.
+- Keep the package independent of external source checkouts.
 
-## Current and target organization
+## Repository layout
 
-The target repository starts as a minimal Git repository. During migration, inspect `internal/docs/migration_status.md` before assuming that a listed target path has been created.
-
-The target layout is:
+The layout is:
 
 - Python package: `src/sphinx_yaq/`
 - Editable JavaScript source: `frontend/src/`
@@ -52,11 +34,11 @@ The target layout is:
 - Demonstration project: `examples/demo/`
 - Generated package assets: `src/sphinx_yaq/_static/sphinx_yaq/`
 
-After JavaScript modules and a build step exist, edit `frontend/src/`, not the generated bundle. Rebuild the package asset and verify that generated output is current.
+Edit JavaScript in `frontend/src/`, not the generated bundle. Rebuild the package asset and verify that generated output is current.
 
 ## Baseline behavior
 
-The pre-refactoring characterization suite is the initial source of truth. Some tests intentionally record known defects. When fixing one of those defects:
+The test suite records the current behavior. Some tests intentionally record known defects. When fixing one of those defects:
 
 1. identify the characterization test;
 2. replace its old expectation with the intended contract;
@@ -67,7 +49,7 @@ Do not delete a failing characterization test merely to make a refactor pass.
 
 ## Testing
 
-Run the narrowest relevant tests while iterating, then run both baseline suites before completing a batch:
+Run the narrowest relevant tests while iterating, then run both main suites before completing implementation work:
 
 ```text
 npm run test:js
@@ -81,19 +63,20 @@ npm ci
 python -m pip install -r requirements-test.txt
 ```
 
-When packaging/build commands are introduced, completed packaging-related batches must also run:
+For packaging-related changes, also run:
 
 ```text
 npm run build:js
 python -m build
+python scripts/smoke_test_wheel.py
 ```
 
 Additional rules:
 
-- Do not hide or broadly suppress Sphinx deprecation warnings; resolve them in the appropriate batch.
-- Do not claim meaningful JavaScript coverage while production code is loaded only through the legacy eval-based harness. Enable source coverage after modules are importable.
+- Do not hide or broadly suppress Sphinx deprecation warnings; resolve them in the relevant implementation.
+- Measure JavaScript coverage on importable production modules.
 - Use Sphinx's real test application for integration behavior rather than mocking all Sphinx internals.
-- For behavior spanning generated HTML and browser runtime, add a browser-level test when the e2e harness becomes available.
+- For behavior spanning generated HTML and browser runtime, add a browser-level test.
 - Report skipped tests, warnings, and unavailable validations explicitly.
 
 ## Python and Sphinx guidelines
@@ -134,7 +117,7 @@ Additional rules:
 - Keep the final runtime compatible with a restrictive same-origin Content Security Policy.
 - Use native buttons and form controls with accessible names.
 - Provide textual feedback in addition to color or icons.
-- Add keyboard and automated accessibility tests in the accessibility batch.
+- Add keyboard and automated accessibility tests for accessibility changes.
 
 ## Documentation and handover
 
@@ -144,10 +127,7 @@ For completed implementation work, report:
 - intentional compatibility changes;
 - tests and build commands run with results;
 - warnings or validations not run;
-- changes to `internal/docs/migration_status.md`;
-- the next recommended batch, without starting it.
-
-Keep `internal/docs/migration_plan.md` stable as the architectural source of truth. Put day-to-day progress and decisions in `internal/docs/migration_status.md`.
+- remaining limitations and recommended follow-up work.
 
 ## Repository safety
 
@@ -158,6 +138,5 @@ Keep `internal/docs/migration_plan.md` stable as the architectural source of tru
 
 ## Public documentation
 
-Public English Sphinx documentation lives in `docs/`; internal engineering and
-migration records live in `internal/docs/` and are not published on Read the Docs.
+Public English Sphinx documentation lives in `docs/`.
 Build public docs with `python -m sphinx -W -E -b html docs docs/_build/html`.

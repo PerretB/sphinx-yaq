@@ -1,7 +1,7 @@
-# Characterization test suite
+# Test suite
 
-These tests capture the behavior of the imported implementation during its
-packaging and refactoring. Production files live under `src/sphinx_yaq`.
+These tests verify the packaged extension and browser runtime. Python production
+files live under `src/sphinx_yaq`; editable JavaScript lives under `frontend/src`.
 
 ## JavaScript tests
 
@@ -61,11 +61,11 @@ python -m pip install -r requirements-test.txt
 python -m pytest
 ```
 
-The six tests use Sphinx's own pytest fixtures to build small documentation
-roots. They verify emitted HTML, encoded question models, copied assets,
-spoilers, every example form from the legacy quiz guide, important Unicode and
-escaping cases, and the current behavior of deferring malformed question JSON
-to the browser.
+The integration tests use Sphinx's own pytest fixtures to build small
+documentation roots. They verify emitted HTML, encoded question models, copied
+assets, spoilers, documented examples, Unicode and escaping, build-time author
+diagnostics, language selection, and parallel builds. Focused unit tests also
+check question-model validation.
 
 ## Installed-wheel smoke test
 
