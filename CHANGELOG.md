@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## 0.1.0 - Unreleased
 
+- Restore legacy true/false correction: a wrong choice remains marked incorrect
+  and is locked until restart, including after restoring saved progress.
 - Show question status as icons with tooltips, retaining visually hidden labels
   and live announcements for screen readers. Increase quiz and spoiler CSS
   specificity so theme rules such as Alabaster's `div.body h2` do not override
@@ -29,8 +31,8 @@ All notable changes to this project will be documented in this file.
 - Serialize quiz data with standard JSON and escaped HTML attributes, and
   render HTML-like titles, identifiers, choice labels, and spoiler text as
   plain text.
-- Replace Watch.JS state propagation with synchronous explicit transitions,
-  keep wrong true/false answers retryable and revealable, and contain browser
+- Replace Watch.JS state propagation with synchronous explicit transitions
+  and contain browser
   initialization failures to the affected quiz or question.
 - Remove Firebase, authentication, cloud synchronization, cookies, and their
   assets; persist minimal quiz progress only in resilient, versioned,

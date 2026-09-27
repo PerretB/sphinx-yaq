@@ -65,6 +65,15 @@ test("quiz and spoilers work by keyboard with named controls and announced feedb
   await expectIconFeedback(quiz.locator('[data-role="wrongMarker"]:visible').first(), "Incorrect");
   await checkQuizAxe(page);
 
+  await expect(falseButton).toBeDisabled();
+  await expect(trueButton).toBeDisabled();
+  await expect(status).toContainText("1 incorrect");
+  await page.reload();
+  await expect(falseButton).toHaveAttribute("aria-pressed", "true");
+  await expect(falseButton).toBeDisabled();
+  await expect(trueButton).toBeDisabled();
+  await expect(quiz.locator('[data-role="wrongMarker"]:visible')).toHaveCount(1);
+
   const remaining = quiz.getByRole("textbox");
   for (let index = 1; index < await remaining.count(); index++) {
     await remaining.nth(index).fill("wrong");
@@ -79,7 +88,7 @@ test("quiz and spoilers work by keyboard with named controls and announced feedb
   await expect(status).toContainText("Solutions shown:");
   await expect(quiz.locator('[data-role="solutionMarker"]:visible').first()).toContainText("Solution shown");
   await expectIconFeedback(quiz.locator('[data-role="solutionMarker"]:visible').first(), "Solution shown");
-  await expect(trueButton).toHaveAttribute("aria-pressed", "true");
+  await expect(falseButton).toHaveAttribute("aria-pressed", "true");
   await expect(trueButton).toBeDisabled();
   await restart.focus();
   await page.keyboard.press("Enter");

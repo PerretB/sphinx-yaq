@@ -602,8 +602,12 @@ var yaq_app= (function(){
 				};
 				this.restore = function(state){
 					if(!state || state.type !== "TF" || typeof state.enabled !== "boolean" ||
-						!isQuestionState(state.state) || ![0, 1, 2].includes(state.selectedIndex)) return false;
-					this.model = { enabled: state.enabled, state: state.state };
+						!(isQuestionState(state.state) || state.state === (QuestionStateEnum.wrong | QuestionStateEnum.solved)) ||
+						![0, 1, 2].includes(state.selectedIndex)) return false;
+					// Normalize wrong answers saved under the former retry policy as well.
+					this.model = state.state & QuestionStateEnum.wrong
+						? gradeAnswer({}, { answered: true, correct: false, retryable: false })
+						: { enabled: state.enabled, state: state.state };
 					this.__switch3.setSelectedIndex(state.selectedIndex);
 					this.render();
 					return true;
@@ -622,7 +626,7 @@ var yaq_app= (function(){
 				} else if(gans === cans){
 					this.model = gradeAnswer(this.model, { answered: true, correct: true });
 				} else {
-					this.model = gradeAnswer(this.model, { answered: true, correct: false });
+					this.model = gradeAnswer(this.model, { answered: true, correct: false, retryable: false });
 				}
 				this.render();
 				this.__onChange();
@@ -1000,7 +1004,7 @@ var yaq_app= (function(){
 				const states = this.__activity.__questions.map(question => question.getModel().state);
 				const count = state => states.filter(value => value === state).length;
 				this.__statusText.textContent = action + ": " + count(QuestionStateEnum.correct) + " correct, " +
-					count(QuestionStateEnum.wrong) + " incorrect, " + count(QuestionStateEnum.unsolved) +
+					states.filter(state => state & QuestionStateEnum.wrong).length + " incorrect, " + count(QuestionStateEnum.unsolved) +
 					" unanswered, " + count(QuestionStateEnum.solved) + " solution shown.";
 			};
 

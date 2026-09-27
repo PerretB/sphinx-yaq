@@ -393,45 +393,61 @@ describe("YAQ runtime characterization", () => {
     expect(isDisplayed(button(document, "Recommencer"))).toBe(true);
   });
 
-  it("keeps a wrong true/false answer retryable", async () => {
-    const { document } = await loadQuestions([{ type: "TF", answer: "T" }]);
+  it.each([["T", "2"], ["F", "0"]])("locks a wrong true/false answer (%s) until restart", async (answer, wrongIndex) => {
+    const { document } = await loadQuestions([{ type: "TF", answer }]);
 
-    await click(document.querySelector('[data-index="2"]'));
+    await click(document.querySelector(`[data-index="${wrongIndex}"]`));
     await click(button(document, "Corriger"));
 
     expect(
       document.querySelector('[data-role="wrongMarker"]').classList,
     ).not.toContain("yaq-hidden");
-    expect(isDisplayed(button(document, "Montrer la solution"))).toBe(true);
-    expect(isDisplayed(button(document, "Recommencer"))).toBe(false);
+    expect(isDisplayed(button(document, "Montrer la solution"))).toBe(false);
+    expect(isDisplayed(button(document, "Corriger"))).toBe(false);
+    expect(isDisplayed(button(document, "Recommencer"))).toBe(true);
+    expect(document.querySelector('[role="status"]').textContent).toContain("1 incorrect, 0 unanswered, 0 solution shown");
+    for (const control of document.querySelectorAll('[data-index]')) expect(control.disabled).toBe(true);
 
-    await click(document.querySelector('[data-index="0"]'));
-    await click(button(document, "Corriger"));
+    await click(document.querySelector(`[data-index="${wrongIndex === "0" ? "2" : "0"}"]`));
+    expect(document.querySelector(`[data-index="${wrongIndex}"]`).getAttribute("aria-pressed")).toBe("true");
 
-    expect(
-      document.querySelector('[data-role="correctMarker"]').classList,
-    ).not.toContain("yaq-hidden");
-    expect(document.querySelector('[data-index="0"]').classList).toContain(
-      "yaq-switch3-button-disabled",
-    );
+    await click(button(document, "Recommencer"));
+    expect(document.querySelector('[data-index="1"]').getAttribute("aria-pressed")).toBe("true");
+    for (const control of document.querySelectorAll('[data-index]')) expect(control.disabled).toBe(false);
   });
 
-  it("reveals the true/false solution in the actual control and disables it", async () => {
+  it("preserves a terminal wrong true/false answer when solutions are requested", async () => {
     const { document } = await loadQuestions([{ type: "TF", answer: "T" }]);
 
     await click(document.querySelector('[data-index="2"]'));
     await click(button(document, "Corriger"));
     await click(button(document, "Montrer la solution"));
 
-    expect(document.querySelector('[data-index="0"]').classList).toContain(
+    expect(document.querySelector('[data-index="2"]').classList).toContain(
       "yaq-switch3-button-active",
     );
-    expect(document.querySelector('[data-index="0"]').classList).toContain(
-      "yaq-switch3-button-disabled",
-    );
+    expect(document.querySelector('[data-index="0"]').disabled).toBe(true);
     expect(
-      document.querySelector('[data-role="solutionMarker"]').classList,
+      document.querySelector('[data-role="wrongMarker"]').classList,
     ).not.toContain("yaq-hidden");
+  });
+
+  it.each([false, true])("restores a terminal wrong TF answer (previous retry policy: %s)", async (oldPolicy) => {
+    const markup = quizMarkup({ questions: [{ type: "TF", answer: "T" }] });
+    harness = await loadRuntime(markup);
+    await click(harness.document.querySelector('[data-index="2"]'));
+    await click(button(harness.document, "Corriger"));
+    harness.window.yaq_app.storage.flush();
+    const key = harness.window.localStorage.key(0);
+    let saved = harness.window.localStorage.getItem(key);
+    if (oldPolicy) saved = saved.replace('"enabled":false,"state":12', '"enabled":true,"state":4');
+    harness.close();
+    harness = await loadRuntime(markup, { storageEntries: [[key, saved]] });
+    const { document } = harness;
+    expect(document.querySelector('[data-index="2"]').getAttribute("aria-pressed")).toBe("true");
+    for (const control of document.querySelectorAll('[data-index]')) expect(control.disabled).toBe(true);
+    expect(document.querySelector('[data-role="wrongMarker"]').classList).not.toContain("yaq-hidden");
+    expect(isDisplayed(button(document, "Recommencer"))).toBe(true);
   });
 
   it("rejects duplicate runtime quiz identifiers without damaging prose", async () => {
