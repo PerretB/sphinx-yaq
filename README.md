@@ -1,5 +1,8 @@
 # sphinx-yaq
 
+[![CI](https://github.com/PerretB/sphinx-yaq/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/PerretB/sphinx-yaq/actions/workflows/ci.yml)
+[![Documentation Status](https://readthedocs.org/projects/sphinx-yaq/badge/?version=latest)](https://sphinx-yaq.readthedocs.io/en/latest/)
+
 Interactive self-assessment quizzes and hidden hints for Sphinx HTML documentation.
 Write exercises in reStructuredText and let readers check their understanding
 directly on the page.
@@ -63,10 +66,19 @@ browser assets automatically when Sphinx builds the HTML pages.
 
 ## Documentation
 
-The [English user guide](docs/index.rst) includes
-[installation instructions](docs/getting-started.rst),
-[working examples](docs/examples.rst), the [authoring reference](docs/authoring.rst),
-and [progress and privacy details](docs/progress.rst).
+The [English user guide](https://sphinx-yaq.readthedocs.io/en/latest/) includes
+[installation instructions](https://sphinx-yaq.readthedocs.io/en/latest/getting-started.html),
+[working examples](https://sphinx-yaq.readthedocs.io/en/latest/examples.html),
+the [authoring reference](https://sphinx-yaq.readthedocs.io/en/latest/authoring.html),
+and [progress and privacy details](https://sphinx-yaq.readthedocs.io/en/latest/progress.html).
+
+Try the live examples directly: [mixed exercise](https://sphinx-yaq.readthedocs.io/en/latest/examples.html#a-mixed-exercise),
+[true or false](https://sphinx-yaq.readthedocs.io/en/latest/examples.html#true-or-false),
+[fill in the blanks](https://sphinx-yaq.readthedocs.io/en/latest/examples.html#fill-in-the-blanks),
+[mathematical expressions](https://sphinx-yaq.readthedocs.io/en/latest/examples.html#mathematical-expressions),
+[regular expressions](https://sphinx-yaq.readthedocs.io/en/latest/examples.html#regular-expressions),
+[single choice](https://sphinx-yaq.readthedocs.io/en/latest/examples.html#single-choice),
+and [hints and spoilers](https://sphinx-yaq.readthedocs.io/en/latest/examples.html#hints-and-spoilers).
 
 Build the documentation locally:
 
@@ -91,7 +103,7 @@ python scripts/smoke_test_wheel.py
 ```
 
 Edit browser code in `frontend/src/` and regenerate the packaged bundle with
-`npm run build:js`. See the [development guide](docs/contributing.rst).
+`npm run build:js`. See the [development guide](https://sphinx-yaq.readthedocs.io/en/latest/contributing.html).
 
 ## License
 
